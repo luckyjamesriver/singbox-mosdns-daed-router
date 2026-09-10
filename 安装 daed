@@ -1,172 +1,170 @@
-# 为方便日后的管理和调整，我用“一键”安装了 daed,主要是方便用图形界面调整、优化 dae 参数。
-# 方法来自“官网”，请自行验证查询。
+# 安装与配置 daed (适配 v1.27.0+ 最新版本)
 
-==============================================================================
+> **daed** 是基于 Linux 内核级 **eBPF** 技术开发的高性能透明代理路由守护程序（dae 的 Web GUI 版本）。它直接在操作系统内核的网络数据链路层完成透明分流与流量转发，免去了繁杂脆弱的 iptables 规则链，具备极高吞吐与极低 CPU 负载。
 
-# Download
-wget -P /tmp https://github.com/daeuniverse/daed/releases/latest/download/installer-daed-linux-$(arch).deb
+---
 
-# install
-sudo dpkg -i /tmp/installer-daed-linux-$(arch).deb
-rm /tmp/installer-daed-linux-$(arch).deb
+## 1. 下载与安装最新版 daed
 
-# Start daed
-sudo systemctl start daed
+当前 daed 最新正式发布版本为 **v1.27.0**。针对 Debian 12 (x86_64 / arm64) 执行以下命令安装：
 
-# enable daed start automatically
-sudo systemctl enable daed
+```bash
+# 1. 确认系统架构并下载对应 deb 安装包
+ARCH=$(uname -m)
+case "${ARCH}" in
+  x86_64|amd64) DAED_ARCH="x86_64" ;;
+  aarch64|arm64) DAED_ARCH="arm64" ;;
+  *) echo "暂不支持的架构: ${ARCH}"; exit 1 ;;
+esac
 
-==============================================================================
+# 2. 下载 v1.27.0 官方 deb 包
+wget -O /tmp/daed.deb "https://github.com/daeuniverse/daed/releases/download/v1.27.0/installer-daed-linux-${DAED_ARCH}.deb"
 
-# 安装完成后浏览器打开 10.10.11.7:2023 ，会出现 daed 配置界面；
-# 点击“编辑”（“笔”）开始配置 dae
+# 3. 安装并清理临时包
+sudo dpkg -i /tmp/daed.deb
+rm -f /tmp/daed.deb
+```
 
---------------------------------------------------------------
-## 配置： global 
+---
 
-# 透明代理端口保护：不选；
-# 日志等级：信息；
-# LAN 接口：ens33;
-# WAN 接口：ens33;
-# 自动配置内核参数：选；（即使你已经配置好了系统的网络环境，这个选项也需要选择，否则不通。）
-# 节点连通性检测：删除 ipv6 节点。
-# 连接选项：domain
-# TLS 实现：utls
-# uTLS 模仿：chrome_auto
+## 2. 启动与管理服务
 
-## 配置：Dns
---------------------------------------------------------------
+```bash
+# 启动并设置开机自启
+sudo systemctl enable daed --now
+
+# 检查运行状态
+sudo systemctl status daed
+
+# 实时查看 daed 日志
+journalctl -u daed -f -o cat
+```
+
+---
+
+## 3. WebUI 界面交互式配置指南
+
+服务启动后，在局域网电脑浏览器中打开：
+```text
+http://10.10.11.7:2023
+```
+点击界面右上角铅笔图标即可进入配置中心。
+
+### 3.1 全局设置 (Global)
+- **LAN 接口 (LAN Interface)**: 选择你的物理网卡（如 `ens33`）。
+- **WAN 接口 (WAN Interface)**: 选择你的物理网卡（如 `ens33`）。
+- **自动配置内核参数 (Auto config kernel parameters)**: **勾选开启**（自动同步底层网络状态）。
+- **透明代理端口保护**: 不选（默认即可）。
+- **日志等级**: `info`（信息）。
+- **TLS 实现 / uTLS 模拟**: 选择 `utls`，模拟选择 `chrome_auto`。
+
+---
+
+### 3.2 DNS 设置 (DNS)
+将 DNS 查询全面托管给本地的 MosDNS (`:5335`)：
+
+```text
 ipversion_prefer: 4
 upstream {
-  mosdns: 'tcp+udp://127.0.0.1:5335' # 我本地 mosdns 服务 
+  mosdns: 'tcp+udp://127.0.0.1:5335'
 }
 routing {
   request {
-    # 广告拒绝
+    # 过滤与屏蔽广告域名查询
     qname(ext:'geosite.dat:category-ads') -> reject
     qname(ext:'geosite.dat:category-ads-all') -> reject
-    # ipv6拒绝
+    # 阻断 AAAA 查询 (全面禁用 IPv6 解析，规避代理漏网)
     qtype(aaaa) -> reject
     fallback: mosdns
-    } 
+  }
 }
---------------------------------------------------------------
-## 配置：路由
+```
 
-l4proto(udp) && dport(53) && dport(5335)-> must_direct
+---
+
+### 3.3 路由分流规则 (Routing)
+写入以下现代精简路由配置：
+
+```text
+# 1. 核心系统进程保护 (杜绝路由环路)
+l4proto(udp) && dport(53) && dport(5335) -> must_direct
 pname(mosdns) -> must_rules
 pname(sing-box) -> must_direct
 
- dip(224.0.0.0/3) -> direct
- dip(geoip:private) -> direct
+# 2. 本地局域网与私有地址直连
+dip(224.0.0.0/3) -> direct
+dip(geoip:private) -> direct
 
-# 根据实际需要配置网站等
-domain(ext:'geosite.dat:github') -> proxy
-domain(ext:'geosite.dat:logitech') -> direct
+# 3. 常见国内直连域名与 IP
 domain(ext:'geosite.dat:cn') -> direct
 domain(ext:'geosite.dat:china-list') -> direct
 domain(ext:'geosite.dat:geolocation-cn') -> direct
-domain(ext:'geosite.dat:private') -> direct
-
-# 国内IP，直接转发
 domain(geosite:cn) -> direct
-dip(geoip:private) -> direct
 dip(geoip:cn) -> direct
 
+# 4. 特殊指定加速域名示例 (按需配置)
+domain(ext:'geosite.dat:github') -> proxy
 
-# IP版本规则:
-ipversion(6) -> block
-
-# 对广告说byebye
+# 5. 广告拦截
 domain(geosite:category-ads) -> block
 domain(geosite:category-ads-all) -> block
 
-
-# 代理域名地址非cn的网站
-domain(geosite:geolocation-!cn) -> proxy
-
-# 代理IP非CN的请求
-!dip(geoip:cn) -> proxy
-dip(ext:'geoip.dat:private') -> direct
-dip(ext:'geoip.dat:cn') -> direct
-
-# 默认出站分组
+# 6. 其余海外流量默认走代理
 fallback: proxy
---------------------------------------------------------------
-## 配置：节点
+```
 
-# 点击 “云+”，新建节点：
-# 链接：socks5://localhost:7777
-# 标签：toworld
-# 该节点即是 sing-box 的唯一入站节点。
---------------------------------------------------------------
-## 配置： 群组
+---
 
-# 将节点用鼠标拖入到“群组”，即完成了 dae 配置。
-# 最后，点击右上角的“云朵”，如果一切正常，变成了蓝色，表示“通了！”。
-# 如果不通，右下角会提示报错信息，根据报错信息检查配置。
+### 3.4 节点配置 (Node)
+1. 点击左侧菜单「**节点**」-> 点击右上角「**+**」新建节点。
+2. 填写节点信息以连接 Sing-box：
+   - **链接 (Link)**: `socks5://127.0.0.1:7777`
+   - **名称 (Tag)**: `sing-box-core`
+3. 保存节点。
 
-==============================================================================
+---
 
-# 以上配置是我自己用的，有些可能需要调整和优化。欢迎来搞。
+### 3.5 群组与启动 (Group)
+1. 进入「**群组**」界面；
+2. 将刚才创建的 `sing-box-core` 节点拖入默认代理群组（`proxy`）；
+3. 点击界面右上角的「**运行 / 重载**」（闪电或运行按钮）。
+4. 状态变为绿色/蓝色即表示 eBPF 透明代理已正式生效接管！
 
-# 可以 ssh 连接旁路由检查详细的输出日志。
-journalctl -xfu daed
+---
 
-# 规则文件自动更新
-touch /usr/share/daed/dae_rule_update.sh
-touch /usr/share/daed/download_log.txt
-vim /usr/share/daed/dae_rule_update.sh
+## 4. 路由规则库每日自动更新
 
---------------------------------------------------------------
+创建 `/usr/share/daed/dae_rule_update.sh`：
 
+```bash
+cat > /usr/share/daed/dae_rule_update.sh <<\x27EOF\x27
 #!/bin/bash
+set -e
 
-# 下载网址
-geoip_url="https://github.com/v2rayA/dist-v2ray-rules-dat/raw/master/geoip.dat"
-geosite_url="https://github.com/v2rayA/dist-v2ray-rules-dat/raw/master/geosite.dat"
-
-# 本地文件
-geoip_file="/usr/share/daed/geoip.dat"
-geosite_file="/usr/share/daed/geosite.dat"
-
-# 下载替换函数
-download_and_replace() {
+download() {
   local url="$1"
-  local local_file="$2"
-  local tmp_file="$local_file.tmp"
-
-  # 文件下载
-  wget -O "$tmp_file" "$url" > /dev/null 2>&1
-
-  if [[ $? -eq 0 ]]; then
-    # 更新成功
-    mv "$tmp_file" "$local_file"
-    echo "$local_file 更新成功!"
+  local dest="$2"
+  local tmp="$dest.tmp"
+  if wget -q -O "$tmp" "$url"; then
+    mv -f "$tmp" "$dest"
+    echo "$dest 更新成功"
   else
-    # 下载失败
-   echo " $url to $local_file 下载失败！检查 /usr/share/daed/download_log.txt ！ " >> /usr/share/daed/download_log.txt
+    echo "$url 下载失败" >&2
   fi
 }
 
-# 执行下载替换
-download_and_replace "$geoip_url" "$geoip_file"
-download_and_replace "$geosite_url" "$geosite_file"
+download "https://github.com/v2rayA/dist-v2ray-rules-dat/raw/master/geoip.dat" "/usr/share/daed/geoip.dat"
+download "https://github.com/v2rayA/dist-v2ray-rules-dat/raw/master/geosite.dat" "/usr/share/daed/geosite.dat"
 
---------------------------------------------------------------
+# 重载 daed 规则
+systemctl restart daed
+EOF
 
 chmod +x /usr/share/daed/dae_rule_update.sh
+```
 
-# 测试运行
-cd /usr/share/daed/
-./dae_rule_update.sh
+添加每日定时任务 (`crontab -e`)：
 
-#  定时更新
-
-crontab -e 
-
-# 定时执行任务
-0 0 * * * sudo /usr/share/daed/dae_rule_update.sh
-
-
-==============================================================================
+```text
+0 4 * * * /usr/share/daed/dae_rule_update.sh >/dev/null 2>&1
+```
