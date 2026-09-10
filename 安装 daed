@@ -56,7 +56,6 @@ routing {
 l4proto(udp) && dport(53) && dport(5335)-> must_direct
 pname(mosdns) -> must_rules
 pname(sing-box) -> must_direct
-pname(dnsmasq)-> must_direct
 
  dip(224.0.0.0/3) -> direct
  dip(geoip:private) -> direct

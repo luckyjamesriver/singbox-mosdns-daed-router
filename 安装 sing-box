@@ -1,143 +1,220 @@
-# 安装 sing-box 及后续的其它组件，你的网络环境应该有可以访问 github.com 等网站的必要条件。
-# sing-box 安装一般有两种方式：一是通过下载二进制文件安装，二是一键安装。
-# 本人这两种都用过，最后使用了一键安装。主要是后续升级方便。
- 
+# 安装 Sing-box (适配 1.14+ 最新版本)
 
-# 一键安装sing-box
+> Sing-box 经过迭代已进化到 1.14+ 版本。在 Debian 12 上，官方仓库采用全新的 deb822 格式（.sources 文件）管理，不仅能直接通过 apt 一键安装与平滑升级，而且彻底杜绝了老旧 GPG 签名的弃用警告。
 
-sudo curl -fsSL https://sing-box.app/gpg.key -o /etc/apt/keyrings/sagernet.asc
+---
+
+## 1. Debian 12 官方 APT 源安装规范 (deb822 标准)
+
+在 Debian 12 终端中执行以下命令，导入 SagerNet 官方 GPG 密钥并配置 deb822 软件源：
+
+```bash
+# 1. 准备 Keyrings 目录并拉取官方公钥
+sudo mkdir -p /etc/apt/keyrings
+curl -fsSL https://sing-box.app/gpg.key -o /etc/apt/keyrings/sagernet.asc
 sudo chmod a+r /etc/apt/keyrings/sagernet.asc
-echo "deb [arch=`dpkg --print-architecture` signed-by=/etc/apt/keyrings/sagernet.asc] https://deb.sagernet.org/ * *" | \
-  sudo tee /etc/apt/sources.list.d/sagernet.list > /dev/null
+
+# 2. 写入 Debian 12 规范的 .sources 软件源配置
+echo "Types: deb
+URIs: https://deb.sagernet.org/
+Suites: *
+Components: *
+Enabled: yes
+Signed-By: /etc/apt/keyrings/sagernet.asc" | sudo tee /etc/apt/sources.list.d/sagernet.sources > /dev/null
+
+# 3. 刷新软件源并安装最新版 Sing-box
 sudo apt-get update
-sudo apt-get install sing-box
+sudo apt-get install sing-box -y
 
-========================================================================
+# 检查当前安装的核心版本 (确认 >= 1.14.0)
+sing-box version
+```
 
-# 安装成功后
+---
+
+## 2. Systemd 服务开机自启与状态管理
+
+```bash
+# 重新加载守护进程
 systemctl daemon-reload
 
-#启用	
-sudo systemctl enable sing-box
+# 开启开机自启并立即启动服务
+systemctl enable sing-box --now
 
-#禁用	
-sudo systemctl disable sing-box
+# 常用运维命令
+systemctl restart sing-box   # 重启服务
+systemctl stop sing-box      # 停止服务
+systemctl status sing-box    # 查看运行状态
 
-#启动	
-sudo systemctl start sing-box
+# 查看实时运行日志 (排查配置或连接问题)
+journalctl -u sing-box -f -o cat
+```
 
-#停止	
-sudo systemctl stop sing-box
+---
 
-#强行停止	
-sudo systemctl kill sing-box
+## 3. Sing-box 1.14 核心配置 (`/etc/sing-box/config.json`)
 
-#重新启动	
-sudo systemctl restart sing-box
+在配合 `daed` 旁路由架构下，Sing-box 作为底层**纯粹的高性能出站代理核心**：
+- **入站**：配置轻量 Socks5 协议（监听 `0.0.0.0:7777`），专供 daed 作为单一上游节点。
+- **出站**：配置主流高性能抗封锁节点（VLESS-Reality、Hysteria 2、TUIC v5），支持手动策略组（selector）与自动优选延迟组（urltest）。
+- **可视化面板**：集成最新版 **MetaCubeXD (Metacubexd)** Web 仪表板，通过 `http://10.10.11.7:9090` 随时直观测速与切换节点。
+- **DNS**：完全不需要在 Sing-box 中配置复杂的 DNS 分流，DNS 解析全权由上层 daed / mosdns 处理。
 
-# 检查 sing-box 服务状态
-sudo systemctl status sing-box
+编辑配置文件：
 
-# 有如下输出，OK.
+```bash
+nano /etc/sing-box/config.json
+```
 
-● sing-box.service - sing-box service
-     Loaded: loaded (/lib/systemd/system/sing-box.service; enabled; preset: enabled)
-     Active: active (running) since Tue 2024-10-15 14:21:52 CST; 7h ago
-       Docs: https://sing-box.sagernet.org
-   Main PID: 1926 (sing-box)
-      Tasks: 10 (limit: 2305)
-     Memory: 27.9M
-        CPU: 1min 33.036s
-     CGroup: /system.slice/sing-box.service
-             └─1926 /usr/bin/sing-box -D /var/lib/sing-box -C /etc/sing-box run
+写入以下标准 1.14 规范配置：
 
-Oct 15 14:21:52 mainreoute systemd[1]: Started sing-box.service - sing-box service.
-
-========================================================================
-
-# 我的 sing-box 配置文件，该配置是为了结合 daed 使用。
-# 进站只配置了 socks 7777 端口，做为 daed 的唯一节点。
-# 结合 daed ,dns 不需要配置。
-
-vim /etc/sing-box/config.json
-
+```json
 {
-    "log": {
-        "disabled": false,
-        "level": "info",
-        "timestamp": true
+  "log": {
+    "disabled": false,
+    "level": "info",
+    "timestamp": true
+  },
+  "experimental": {
+    "clash_api": {
+      "external_controller": "0.0.0.0:9090",
+      "external_ui": "metacubexd",
+      "external_ui_download_url": "https://github.com/MetaCubeX/metacubexd/archive/refs/heads/gh-pages.zip",
+      "external_ui_download_detour": "select",
+      "default_mode": "rule"
     },
-    "experimental": {
-        "clash_api": {
-            "external_controller": "0.0.0.0:9090",
-            "external_ui": "metacubexd",
-            "external_ui_download_url": "https://github.com/MetaCubeX/Yacd-meta/archive/gh-pages.zip", # Yacd-meta
-            # "external_ui_download_url": "https://github.com/MetaCubeX/metacubexd/archive/refs/heads/gh-pages.zip", # METACUBE(XD)
-            "external_ui_download_detour": "manual",
-            "default_mode": "rule"
-        },
-        "cache_file": {
-            "enabled": true
-        }
-    },
-    "inbounds": [
-        {
-            "type": "socks",
-            "tag": "socks-in",
-            "listen": "0.0.0.0",
-            "listen_port": 7777,
-            "tcp_fast_open": true,
-            "tcp_multi_path": false,
-            "udp_fragment": true,
-            "sniff": false,
-            "sniff_override_destination": false,
-            "sniff_timeout": "300ms",
-            "udp_timeout": 300
-        }
-    ],
-    "outbounds": [
-    {
-			"type": "selector",
-			"tag": "manual",
-			"outbounds": [
-				"VMess_WS",
-				"singbox_hysteria2",
-				"VLESS_Reality_Vision",
-				"VLESS_Reality_gPRC",
-				"tuic",
-				"VMess_HTTPUpgrade"
-			]
-		},
-      .....
-    
-# outbounds 配置方法请自行学习，可供参考的样板网站之一：
-
-   https://github.com/chika0801/sing-box-examples
-   
-# 路由配置的 manual ,是为出站配置了 selector . 
-
-    ],
-    "route": {
-        "final": "manual",
-        "auto_detect_interface": true
+    "cache_file": {
+      "enabled": true
     }
+  },
+  "inbounds": [
+    {
+      "type": "socks",
+      "tag": "socks-in",
+      "listen": "0.0.0.0",
+      "listen_port": 7777,
+      "tcp_fast_open": false,
+      "udp_fragment": true
+    }
+  ],
+  "outbounds": [
+    {
+      "type": "selector",
+      "tag": "select",
+      "outbounds": [
+        "auto",
+        "VLESS-Reality",
+        "Hysteria2",
+        "TUIC-v5",
+        "direct"
+      ],
+      "default": "auto"
+    },
+    {
+      "type": "urltest",
+      "tag": "auto",
+      "outbounds": [
+        "VLESS-Reality",
+        "Hysteria2",
+        "TUIC-v5"
+      ],
+      "url": "https://www.gstatic.com/generate_204",
+      "interval": "3m",
+      "tolerance": 50
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS-Reality",
+      "server": "你的VPS_IP或域名",
+      "server_port": 443,
+      "uuid": "你的UUID",
+      "flow": "xtls-rprx-vision",
+      "tls": {
+        "enabled": true,
+        "server_name": "www.apple.com",
+        "utls": {
+          "enabled": true,
+          "fingerprint": "chrome"
+        },
+        "reality": {
+          "enabled": true,
+          "public_key": "你的Reality公钥",
+          "short_id": "你的short_id"
+        }
+      },
+      "packet_encoding": "xudp"
+    },
+    {
+      "type": "hysteria2",
+      "tag": "Hysteria2",
+      "server": "你的VPS_IP或域名",
+      "server_port": 443,
+      "up_mbps": 50,
+      "down_mbps": 300,
+      "password": "你的Hy2密码",
+      "obfs": {
+        "type": "salamander",
+        "password": "你的混淆密码"
+      },
+      "tls": {
+        "enabled": true,
+        "server_name": "你的证书域名",
+        "insecure": true
+      }
+    },
+    {
+      "type": "tuic",
+      "tag": "TUIC-v5",
+      "server": "你的VPS_IP或域名",
+      "server_port": 443,
+      "uuid": "你的UUID",
+      "password": "你的TUIC密码",
+      "congestion_control": "bbr",
+      "tls": {
+        "enabled": true,
+        "server_name": "你的证书域名",
+        "alpn": [
+          "h3"
+        ],
+        "insecure": true
+      }
+    },
+    {
+      "type": "direct",
+      "tag": "direct"
+    }
+  ],
+  "route": {
+    "final": "select",
+    "auto_detect_interface": true
+  }
 }
+```
 
-# 保存json，重启 sing-box .
+---
 
+## 4. 语法检查与启动服务
+
+Sing-box 官方提供了专门的配置语法检查命令，在重启服务前务必执行：
+
+```bash
+# 检查配置文件语法是否完全正确
+sing-box check -c /etc/sing-box/config.json
+
+# 确认无报错后重启服务
 systemctl restart sing-box
 
-# 检查 sing-box 服务状态
+# 查看实时日志
+journalctl -u sing-box -f -o cat
+```
 
-journalctl -xfu sing-box 
+---
 
-# 如果有报错，请根据日志的提示修改 config.json ，保存重启 sing-box .直到不报错为止。
-# 很多都是格式错误引进的，编辑和修改时要细心，特别是 “，号” 和 “} 号“ 这两个家伙。
+## 5. WebUI 控制面板访问
 
-========================================================================
-
-# 本地浏览器： 10.10.11.7:9090 ，打开 METACUBE(XD),在”代理“手动选择要连接的结点。
-
-========================================================================
-# 以上配置只适合我自己的网络环境！
-# sing-box 配置，请根据实际情况，自行配置。网上有大把案例参考。
+在局域网电脑或手机浏览器打开：
+```text
+http://10.10.11.7:9090
+```
+- 首次进入将自动加载 **MetaCubeXD** 仪表板；
+- 在「代理」标签页中，可以查看每个节点的实时延迟、切换节点或设置为 `auto` 自动优选。
