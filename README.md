@@ -29,12 +29,27 @@
 
 ---
 
-## 📂 部署指南顺序目录
+---
+
+## ⚡ 极速起步：一键全自动部署旁路由核心服务
+
+如果您已在 PVE 中安装好 Debian 12 虚拟机并配置好了静态 IP 与 SSH，可直接执行**一键全自动流水线脚本**，2 分钟内全自动安装完成（**MosDNS v5 + Sing-box 1.14+ + MetaCubeXD + daed eBPF**）：
+
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/luckyjamesriver/A-side-router-on-Debian-12/main/setup.sh)
+```
+
+👉 **查看详细图文说明**: [【一键配置指南 (一键配置.md)】](./%E4%B8%80%E9%94%AE%E9%85%8D%E7%BD%AE.md)
+
+---
+
+## 📂 部署指南顺序目录（逐步深入与原理手册）
 
 请按照以下顺序依序配置各模块：
 
 | 章节顺序 | 说明文档 | 核心内容 |
 | :--- | :--- | :--- |
+| 🚀 **极速通道** | [一键配置指南](./%E4%B8%80%E9%94%AE%E9%85%8D%E7%BD%AE.md) | **Debian 12 旁路由一键全自动部署脚本** (MosDNS + Sing-box + daed + MetaCubeXD) |
 | **步骤 00** | [00. 安装 PVE9](./00.安装%20PVE9.md) | 零刻 EQ12 BIOS 调优、PVE 9 系统安装、清华源配置、双 2.5G 虚拟网络与硬件直通 |
 | **步骤 01** | [01. 安装 RouterOS 虚拟机](./01.安装%20RouterOS%20虚拟机.md) | 导入 CHR 官方 OVA/RAW 磁盘、WAN/LAN 接口规划、PPPoE 拨号与 DHCP VIP 网关下发 |
 | **步骤 02** | [02. 安装 Debian12 虚拟机](./02.安装%20Debian12%20虚拟机.md) | 创建 4核4G VirtIO 虚拟机、ens18 静态 IP/DNS、开启 BBR、关闭 ICMP 重定向防环 |
