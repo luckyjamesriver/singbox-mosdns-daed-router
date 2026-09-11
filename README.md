@@ -74,7 +74,7 @@ bash <(curl -fsSL https://raw.githubusercontent.com/luckyjamesriver/A-side-route
 │  ┌───────────────────────────────────────────────────────────────────────┐  │
 │  │ [VM 100] RouterOS 主路由 (CHR v7.x)                                    │  │
 │  │  - WAN 口 (vmbr1 -> enp2s0): PPPoE 拨号获取公网 IP / 光猫 DHCP          │  │
-│  │  - LAN 口 (vmbr0 -> enp1s0): IP 10.10.11.11/24 (基础 NAT 转发)         │  │
+│  │  - LAN 口 (vmbr0 -> enp1s0): IP 10.10.11.1/24 (基础 NAT 转发)         │  │
 │  │  - DHCP 服务: 网段 10.10.11.100-200, 网关 & DNS 均指向 VIP 10.10.11.10  │  │
 │  └───────────────────────────────────────────────────────────────────────┘  │
 │                                      │ (vmbr0 内部虚拟局域网交换机)            │
