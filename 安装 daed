@@ -51,30 +51,51 @@ http://10.10.11.7:2023
 点击界面右上角铅笔图标即可进入配置中心。
 
 ### 3.1 全局设置 (Global)
-- **LAN 接口 (LAN Interface)**: 选择你的物理网卡（如 `ens33`）。
-- **WAN 接口 (WAN Interface)**: 选择你的物理网卡（如 `ens33`）。
-- **自动配置内核参数 (Auto config kernel parameters)**: **勾选开启**（自动同步底层网络状态）。
-- **透明代理端口保护**: 不选（默认即可）。
-- **日志等级**: `info`（信息）。
-- **TLS 实现 / uTLS 模拟**: 选择 `utls`，模拟选择 `chrome_auto`。
+在 WebUI 中根据以下参数进行配置：
+
+- **软件选项**：
+  - **日志等级**：`warn`
+  - **透明代理端口**：`12345`
+  - **透明代理端口保护**：`Enabled` (开启)
+  - **为 dae 设置套接字标记 (Socket mark)**：`0`
+- **接口及内核选项**：
+  - **LAN 接口**：`ens18`（按实际网卡名称选择）
+  - **WAN 接口**：`ens18`（按实际网卡名称选择）
+  - **自动配置内核参数**：`Enabled` (开启)
+  - **MPTCP**：`Disabled` (关闭)
+  - **启用本地 TCP 快速重定向**：`Disabled` (关闭)
+- **连接选项**：
+  - **拨号模式 (Dial Mode)**：`domain++`
+  - **允许不安全 (Allow Insecure)**：`Disabled` (关闭)
+  - **禁用网络等待**：`Enabled` (开启)
+- **节点连通性检测**：
+  - **检测间隔**：`30s`
+  - **检测公差**：`0s`
+  - **嗅探超时**：`100ms`
+  - **TCP 检测 HTTP 方式**：`HEAD`
+  - **TCP 检测链接**：`http://cp.cloudflare.com`，`1.1.1.1`
+  - **UDP 检测 DNS**：`dns.google:53`，`8.8.8.8`
+- **TLS**：
+  - **TLS 实现**：`utls`
+  - **uTLS 模仿**：`chrome_auto`
+- **DNS**：
+  - **备用解析器**：`8.8.8.8:53`
+- **带宽限制 (Bandwidth)**：
+  - **最大上行带宽**：`200 mbps`
+  - **最大下行带宽**：`1 gbps`
 
 ---
 
 ### 3.2 DNS 设置 (DNS)
-将 DNS 查询全面托管给本地的 MosDNS (`:53`)：
+点击 DNS 标签页，将 DNS 查询全面委托给本地的 MosDNS (`:53`)：
 
 ```text
 ipversion_prefer: 4
 upstream {
-  mosdns: 'tcp+udp://127.0.0.1:53'
+  mosdns: 'tcp+udp://127.0.0.1:53' # 本地 mosdns 服务
 }
 routing {
   request {
-    # 过滤与屏蔽广告域名查询
-    qname(ext:'geosite.dat:category-ads') -> reject
-    qname(ext:'geosite.dat:category-ads-all') -> reject
-    # 阻断 AAAA 查询 (全面禁用 IPv6 解析，规避代理漏网)
-    qtype(aaaa) -> reject
     fallback: mosdns
   }
 }
@@ -82,34 +103,61 @@ routing {
 
 ---
 
-### 3.3 路由分流规则 (Routing)
-写入以下现代精简路由配置：
+### 3.3 路由分流规则 (Route)
+点击 Route 标签页，填入以下实际运行的生产分流规则：
 
 ```text
-# 1. 核心系统进程保护 (杜绝路由环路)
-l4proto(udp) && dport(53) && dport(5335) -> must_direct
-pname(mosdns) -> must_rules
-pname(sing-box) -> must_direct
+# 1. 拦截无效流量
+ipversion(6) -> block
+l4proto(udp) && dport(443) -> block
 
-# 2. 本地局域网与私有地址直连
+# 2. 核心 AI 平台加速
+domain(suffix: openrouter.ai) -> proxy
+domain(suffix: anthropic.com) -> proxy
+domain(suffix: claude.ai) -> proxy
+domain(suffix: openai.com) -> proxy
+domain(suffix: ai.google.dev) -> proxy
+
+# 3. 出口进程绝对直连 (防止环路)
+pname(sing-box) -> must_direct
+pname(tailscaled) -> direct
+domain(suffix: roonlabs.net) -> direct
+
+# 4. DNS 防环路 (仅针对 53 端口)
+pname(mosdns) && l4proto(udp) && dport(53) -> must_direct
+
+# 5. 内网与私有服务
+dip(10.10.11.0/24) -> direct
 dip(224.0.0.0/3) -> direct
 dip(geoip:private) -> direct
 
-# 3. 常见国内直连域名与 IP
-domain(ext:'geosite.dat:cn') -> direct
-domain(ext:'geosite.dat:china-list') -> direct
-domain(ext:'geosite.dat:geolocation-cn') -> direct
+# 6. 国内流量白名单
 domain(geosite:cn) -> direct
+domain(geosite:xiaohongshu) -> direct
+domain(suffix: deepseek.com) -> direct
+domain(suffix: qianwen.com) -> direct
+domain(suffix: taobao.com) -> direct
+domain(suffix: tmall.com) -> direct
 dip(geoip:cn) -> direct
 
-# 4. 特殊指定加速域名示例 (按需配置)
-domain(ext:'geosite.dat:github') -> proxy
+# 7. 特殊分流规则
+domain(suffix: split.io) -> direct
 
-# 5. 广告拦截
-domain(geosite:category-ads) -> block
-domain(geosite:category-ads-all) -> block
+# 8. Mosdns 策略接入点
+pname(mosdns) -> must_rules
 
-# 6. 其余海外流量默认走代理
+# 优先匹配 OpenAI & ChatGPT 关联域名
+domain(
+  geosite:openai,
+  chatgpt.com,
+  openai.com,
+  oaistatic.com,
+  oaiusercontent.com,
+  sentry.io,
+  intercom.io
+) -> proxy
+
+# 9. 默认兜底
 fallback: proxy
 ```
 
@@ -119,14 +167,14 @@ fallback: proxy
 1. 点击左侧菜单「**节点**」-> 点击右上角「**+**」新建节点。
 2. 填写节点信息以连接 Sing-box：
    - **链接 (Link)**: `socks5://127.0.0.1:7891`
-   - **名称 (Tag)**: `sing-box-core`
+   - **名称 (Tag)**: `ToWorld`
 3. 保存节点。
 
 ---
 
 ### 3.5 群组与启动 (Group)
 1. 进入「**群组**」界面；
-2. 将刚才创建的 `sing-box-core` 节点拖入默认代理群组（`proxy`）；
+2. 将刚才创建的 `ToWorld` 节点拖入代理群组；
 3. 点击界面右上角的「**运行 / 重载**」（闪电或运行按钮）。
 4. 状态变为绿色/蓝色即表示 eBPF 透明代理已正式生效接管！
 
