@@ -170,7 +170,10 @@ install_mosdns() {
     curl -fsSL https://raw.githubusercontent.com/Hackl0us/GeoIP2-CN/release/CN-ip-cidr.txt -o /etc/mosdns/rules/geoip_cn.txt 2>/dev/null || touch /etc/mosdns/rules/geoip_cn.txt
     curl -fsSL https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/proxy-list.txt -o /etc/mosdns/rules/geosite_geolocation-\!cn.txt 2>/dev/null || touch /etc/mosdns/rules/geosite_geolocation-\!cn.txt
     curl -fsSL https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/apple.txt -o /etc/mosdns/rules/geosite_apple.txt 2>/dev/null || touch /etc/mosdns/rules/geosite_apple.txt
+    curl -fsSL https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/reject-list.txt -o /etc/mosdns/rules/reject-list.txt 2>/dev/null || touch /etc/mosdns/rules/reject-list.txt
+    touch /etc/mosdns/rules/geosite_byteplus.txt
     touch /etc/mosdns/rules/ai-proxy.txt
+    touch /etc/mosdns/rules/adblock.txt
 
     # 写入强制国内直连域名 (含阿里/淘宝全系、金融与本地资产)
     cat > /etc/mosdns/rules/force-cn.txt << 'EOF'
@@ -195,42 +198,64 @@ hofamilynet.online
 EOF
 
     # 写入标准 MosDNS 配置文件
-    info "生成 MosDNS 标准分流配置 (/etc/mosdns/config.yaml)..."
+    info "生成 MosDNS 高性能分流配置 (/etc/mosdns/config.yaml)..."
     cat > /etc/mosdns/config.yaml << EOF
 log:
   level: info
-  file: ""
+  file: "/etc/mosdns/mosdns.log"
 
 plugins:
-  # 1. 规则匹配插件
-  - tag: geosite_cn
+  # 1. 内存缓存 (20万级大容量高速缓存)
+  - tag: cache
+    type: cache
+    args:
+      size: 204800
+      lazy_cache_ttl: 86400
+
+  # 2. 域名与 IP 规则集
+  - tag: cn_domain
     type: domain_set
     args:
+      exps: ["lan", "local", "arpa"]
       files:
-        - "/etc/mosdns/rules/geosite_cn.txt"
         - "/etc/mosdns/rules/force-cn.txt"
+        - "/etc/mosdns/rules/geosite_cn.txt"
 
-  - tag: geosite_apple
-    type: domain_set
-    args:
-      files:
-        - "/etc/mosdns/rules/geosite_apple.txt"
-
-  - tag: geosite_no_cn
+  - tag: non_cn_domain
     type: domain_set
     args:
       files:
         - "/etc/mosdns/rules/geosite_geolocation-!cn.txt"
         - "/etc/mosdns/rules/ai-proxy.txt"
 
-  - tag: geoip_cn
+  - tag: apple_domain
+    type: domain_set
+    args:
+      files:
+        - "/etc/mosdns/rules/geosite_apple.txt"
+
+  - tag: byte_domain
+    type: domain_set
+    args:
+      files:
+        - "/etc/mosdns/rules/geosite_byteplus.txt"
+
+  - tag: reject_domain
+    type: domain_set
+    args:
+      files:
+        - "/etc/mosdns/rules/reject-list.txt"
+        - "/etc/mosdns/rules/adblock.txt"
+
+  - tag: cn_ip
     type: ip_set
     args:
       files:
         - "/etc/mosdns/rules/geoip_cn.txt"
 
-  # 2. 上游 DNS 服务器插件
-  - tag: forward_local
+  # 3. 上游 DNS 服务器
+  # 国内 DNS（直连）
+  - tag: dns_cn
     type: forward
     args:
       concurrent: 3
@@ -239,67 +264,141 @@ plugins:
         - addr: "223.5.5.5"
         - addr: "119.29.29.29"
 
-  - tag: forward_remote
+  # 国内备用 (TCP + DoH)
+  - tag: dns_cn_backup
+    type: forward
+    args:
+      concurrent: 3
+      upstreams:
+        - addr: "tcp://223.6.6.6"
+        - addr: "https://doh.pub/dns-query"
+          dial_addr: "1.12.12.12"
+        - addr: "https://doh.pub/dns-query"
+          dial_addr: "120.53.53.53"
+
+  # 国外 DNS (走代理)
+  - tag: dns_proxy
+    type: forward
+    args:
+      concurrent: 3
+      upstreams:
+        - addr: "tcp://1.1.1.1"
+        - addr: "tcp://8.8.8.8"
+        - addr: "tcp://9.9.9.9"
+
+  # 国外备用
+  - tag: dns_proxy2
     type: forward
     args:
       concurrent: 2
       upstreams:
-        - addr: "tls://1.1.1.1"
-          enable_pipeline: true
-        - addr: "tls://8.8.8.8"
-          enable_pipeline: true
+        - addr: "tcp://8.8.4.4"
+        - addr: "tcp://1.0.0.1"
 
-  # 3. 内存缓存插件
-  - tag: cache
-    type: cache
+  # 抖音火山 CDN 专属
+  - tag: dns_douyin
+    type: forward
     args:
-      size: 20000
-      lazy_cache_ttl: 86400
+      concurrent: 2
+      upstreams:
+        - addr: "180.184.1.1"
+        - addr: "180.184.2.2"
 
-  # 4. 主要执行逻辑流
-  - tag: main_sequence
+  # 4. 容灾与分流策略
+  - tag: apple_strategy
+    type: fallback
+    args:
+      primary: dns_cn
+      secondary: dns_cn_backup
+      threshold: 700
+      always_standby: true
+
+  - tag: douyin_strategy
+    type: fallback
+    args:
+      primary: dns_douyin
+      secondary: dns_cn
+      threshold: 200
+      always_standby: true
+
+  - tag: final_strategy
+    type: fallback
+    args:
+      primary: dns_proxy
+      secondary: dns_proxy2
+      threshold: 700
+      always_standby: true
+
+  # 5. 主执行逻辑序列
+  - tag: main
     type: sequence
     args:
       - exec: \$cache
       - matches: has_resp
         exec: accept
 
-      - matches: qtype 65
+      # 屏蔽 IPv6 AAAA 记录 (防泄漏与抢答)
+      - matches: qtype 28
+        exec: reject 0
+
+      # 屏蔽 HTTPS RR (防止 ECH 绕过)
+      - matches: qtype 12 65
         exec: reject 3
 
-      - matches: qname \$geosite_apple
-        exec: \$forward_local
+      # 广告拦截
+      - matches: qname \$reject_domain
+        exec: reject 3
+
+      # Apple 优化
+      - matches: qname \$apple_domain
+        exec: \$apple_strategy
       - matches: has_resp
         exec: accept
 
-      - matches: qname \$geosite_cn
-        exec: \$forward_local
+      # 抖音 CDN 优化
+      - matches: qname \$byte_domain
+        exec: \$douyin_strategy
       - matches: has_resp
         exec: accept
 
-      - matches: qname \$geosite_no_cn
-        exec: \$forward_remote
+      # 国内域名直连
+      - matches: qname \$cn_domain
+        exec: \$dns_cn
       - matches: has_resp
         exec: accept
 
-      - exec: \$forward_local
-      - matches: response_ip \$geoip_cn
+      # 国外域名代理
+      - matches: qname \$non_cn_domain
+        exec: \$dns_proxy
+      - exec: ttl 300-3600
+      - matches: has_resp
         exec: accept
 
+      # 未知域名：国内 DNS 优先，国内 IP 则直接采纳
+      - exec: \$dns_cn
+      - matches: resp_ip \$cn_ip
+        exec: accept
+
+      # 未知非国内 IP 丢弃，切换国外代理 DNS 兜底
       - exec: drop_resp
-      - exec: \$forward_remote
+      - exec: \$final_strategy
+      - exec: ttl 300-3600
+      - matches: has_resp
+        exec: accept
 
-  # 5. 监听端口 (TCP & UDP 53)
+      - exec: reject 3
+
+  # 6. 监听端口 (TCP & UDP 53)
   - tag: udp_server
     type: udp_server
     args:
-      entry: main_sequence
+      entry: main
       listen: "0.0.0.0:53"
 
   - tag: tcp_server
     type: tcp_server
     args:
-      entry: main_sequence
+      entry: main
       listen: "0.0.0.0:53"
 EOF
 
@@ -324,6 +423,29 @@ EOF
 
     systemctl daemon-reload
     systemctl enable mosdns --now
+
+    # 配置规则库自动更新脚本与定时任务
+    cat > /etc/mosdns/mos_rule_update.sh << 'EOF'
+#!/bin/bash
+set -e
+download() {
+  local url="$1"
+  local dest="$2"
+  local tmp="$dest.tmp"
+  if curl -fsSL "$url" -o "$tmp"; then
+    mv -f "$tmp" "$dest"
+  fi
+}
+download "https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/direct-list.txt" "/etc/mosdns/rules/geosite_cn.txt"
+download "https://raw.githubusercontent.com/Hackl0us/GeoIP2-CN/release/CN-ip-cidr.txt" "/etc/mosdns/rules/geoip_cn.txt"
+download "https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/proxy-list.txt" "/etc/mosdns/rules/geosite_geolocation-!cn.txt"
+download "https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/reject-list.txt" "/etc/mosdns/rules/reject-list.txt"
+download "https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/apple.txt" "/etc/mosdns/rules/geosite_apple.txt"
+systemctl restart mosdns
+EOF
+    chmod +x /etc/mosdns/mos_rule_update.sh
+    (crontab -l 2>/dev/null | grep -v 'mos_rule_update.sh' ; echo "0 4 * * * /etc/mosdns/mos_rule_update.sh >/dev/null 2>&1") | crontab -
+
     success "MosDNS 服务已部署并成功运行在 0.0.0.0:53！"
 }
 
@@ -490,8 +612,11 @@ show_summary() {
     echo -e "  ${GREEN}第一步：浏览器打开 daed 网页管理面板${PLAIN}"
     echo -e "    1. 访问: ${YELLOW}http://${LOCAL_IP}:2023${PLAIN} (初次打开设置管理员账号密码)"
     echo -e "    2. 在【接口】中选择: ${GREEN}${INTERFACE}${PLAIN}"
-    echo -e "    3. 添加您的订阅节点，或将本地 Sing-box (socks5://127.0.0.1:7891) 作为出站"
-    echo -e "    4. 点击右上角运行按钮启动 eBPF 内核级透明分流！"
+    echo -e "    3. 在【连接选项】中：拨号模式推荐选择: ${CYAN}domain${PLAIN} (极速低负载)"
+    echo -e "    4. 在【DNS】中：上游填写: ${CYAN}tcp+udp://127.0.0.1:53${PLAIN}"
+    echo -e "    5. 添加本地 Sing-box (socks5://127.0.0.1:7891) 作为出站节点"
+    echo -e "    6. 在【路由】中配置分流规则 (pname(mosdns) -> must_rules, geosite:cn/geoip:cn -> direct)"
+    echo -e "    7. 点击右上角运行按钮启动 eBPF 内核级透明分流！"
     echo ""
     echo -e "  ${GREEN}第二步：在 RouterOS 主路由配置 DHCP (让局域网设备无缝享受加速)${PLAIN}"
     echo -e "    - 将 RouterOS DHCP Option 3 (Gateway) 指向 : ${GREEN}${LOCAL_IP}${PLAIN}"
