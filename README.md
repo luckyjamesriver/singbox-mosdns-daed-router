@@ -36,7 +36,7 @@
 如果您已在 PVE 中安装好 Debian 12 虚拟机并配置好了静态 IP 与 SSH，可直接执行**一键全自动流水线脚本**，2 分钟内全自动安装完成（**MosDNS v5 + Sing-box 1.14+ + MetaCubeXD + daed eBPF**）：
 
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/luckyjamesriver/A-side-router-on-Debian-12/main/setup.sh)
+bash <(curl -fsSL https://raw.githubusercontent.com/luckyjamesriver/singbox-mosdns-daed-router/main/setup.sh)
 ```
 
 👉 **查看详细图文说明**: [【一键配置指南 (一键配置.md)】](./%E4%B8%80%E9%94%AE%E9%85%8D%E7%BD%AE.md)

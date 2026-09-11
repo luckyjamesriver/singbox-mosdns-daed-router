@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # ==============================================================================
-# Project: A-side-router-on-Debian-12
+# Project: singbox-mosdns-daed-router
 # Script: setup.sh (Debian 12 旁路由核心服务一键全自动部署脚本)
 # Description: 全自动完成 MosDNS v5 + Sing-box 1.14+ + MetaCubeXD + daed eBPF 安装调优
-# Repository: https://github.com/luckyjamesriver/A-side-router-on-Debian-12
+# Repository: https://github.com/luckyjamesriver/singbox-mosdns-daed-router
 # License: MIT
 # ==============================================================================
 
@@ -70,7 +70,7 @@ detect_environment() {
     clear
     echo -e "${PURPLE}====================================================${PLAIN}"
     echo -e "${GREEN}      Debian 12 旁路由核心服务一键全自动部署工具      ${PLAIN}"
-    echo -e "${BLUE}  GitHub: https://github.com/luckyjamesriver/A-side-router-on-Debian-12${PLAIN}"
+    echo -e "${BLUE}  GitHub: https://github.com/luckyjamesriver/singbox-mosdns-daed-router${PLAIN}"
     echo -e "${PURPLE}====================================================${PLAIN}"
     echo -e "系统环境探查结果:"
     echo -e "  - 操作系统版本  : ${GREEN}Debian ${VERSION_ID:-12} (${PKG_ARCH})${PLAIN}"
