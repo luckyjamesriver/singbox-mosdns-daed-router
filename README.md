@@ -36,20 +36,24 @@
 | **步骤 2** | [安装 sing-box](./安装%20sing-box) | APT deb822 安装 Sing-box 1.14+、Socks5 7891 进站、最新多协议出站及 MetaCubeXD |
 | **步骤 3** | [安装 mosdns](./安装%20mosdns) | 安装 mosdns v5，配置国内外域名/IP 规则集与本地 DNS 缓存 |
 | **步骤 4** | [安装 daed](./安装%20daed) | 安装 daed、配置 eBPF 透明代理分流规则、关联 Sing-box 节点 |
+| **步骤 5 (可选/进阶)** | [安装 keepalived](./安装%20keepalived) | 克隆虚拟机搭建 Keepalived 双机高可用旁路由，实现 VIP 故障无缝漂移 |
 
 ---
 
 ## 💡 网络拓扑示例参考
 
 ```text
-[ 客户端设备 (PC / 手机 / TV) ]
+[ 局域网终端 (PC / 手机 / TV) ]
            │
-           │ (网关指向: 10.10.11.7, DNS 指向: 10.10.11.7)
+           │ (DHCP 网关 & DNS 均指向 VIP: 10.10.11.10)
            ▼
-[ Debian 12 旁路由 (10.10.11.7) ]
-    ├─ daed (eBPF 流量劫持与路由判定)
-    ├─ mosdns (:53 国内外精准分流防污染)
-    └─ sing-box (:7891 出站代理核心)
+[ Keepalived 虚拟路由冗余 (VIP: 10.10.11.10) ]
+     ├── 主机 A (Master: 10.10.11.7, priority 100)
+     └── 备机 B (Backup: 10.10.11.8, priority 90)
+           │
+           ├─ daed (eBPF 流量劫持与路由判定)
+           ├─ mosdns (:53 国内外精准分流防污染)
+           └─ sing-box (:7891 出站代理核心)
            │
            │ (国内直连流量 / 代理外网流量出站)
            ▼
