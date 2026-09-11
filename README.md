@@ -1,14 +1,14 @@
-# 零刻 EQ12 + PVE 9 家庭全网加速与高可用软路由全套搭建指南 🚀
+## 零刻 EQ12 + PVE 9 家庭全网加速与高可用软路由全套搭建指南 🚀
 
 > 基于 **零刻 EQ12 (Intel i3-N300 双 2.5G) + Proxmox VE 9 + RouterOS 主路由 + Debian 12 (daed eBPF + Sing-box 1.14+ + MosDNS + Keepalived 双机高可用旁路由)** 的现代低延迟、高吞吐、高稳定全能家庭网络全套架构方案。
 
 ---
 
-## 🌟 架构演进与设计亮点
+### 🌟 架构演进与设计亮点
 
 本项目记录了从传统单体虚拟机 OpenWrt (PassWall + MosDNS) 演进到 **PVE 9 虚拟化底座 + RouterOS 纯净主路由 + Debian 12 双机热备 Linux 旁路由** 的完整部署流程。相较于传统方案，具备企业级的网络吞吐能力、强悍的抗故障容灾韧性与极致的代理性能。
 
-### 核心特性
+#### 核心特性
 1. **PVE 9 现代虚拟化平台 (零刻 EQ12 小主机)**：
    - 基于 8 核 Intel i3-N300 + 16G DDR5 + 500G NVMe SSD + 双 2.5G 网卡；
    - 规划 `vmbr1` (WAN 拨号直连光猫) 与 `vmbr0` (LAN 局域网桥接与各 VM 互联)；
@@ -31,7 +31,7 @@
 
 ---
 
-## ⚡ 极速起步：一键全自动部署旁路由核心服务
+### ⚡ 极速起步：一键全自动部署旁路由核心服务
 
 如果您已在 PVE 中安装好 Debian 12 虚拟机并配置好了静态 IP 与 SSH，可直接执行**一键全自动流水线脚本**，2 分钟内全自动安装完成（**MosDNS v5 + Sing-box 1.14+ + MetaCubeXD + daed eBPF**）：
 
@@ -43,7 +43,7 @@ bash <(curl -fsSL https://raw.githubusercontent.com/luckyjamesriver/A-side-route
 
 ---
 
-## 📂 部署指南顺序目录（逐步深入与原理手册）
+### 📂 部署指南顺序目录（逐步深入与原理手册）
 
 请按照以下顺序依序配置各模块：
 
@@ -60,7 +60,7 @@ bash <(curl -fsSL https://raw.githubusercontent.com/luckyjamesriver/A-side-route
 
 ---
 
-## 💡 全局网络拓扑架构图
+### 💡 全局网络拓扑架构图
 
 ```text
                [ 互联网光猫 (宽带入户) ]
@@ -106,7 +106,7 @@ bash <(curl -fsSL https://raw.githubusercontent.com/luckyjamesriver/A-side-route
 
 ---
 
-## 🙏 特别鸣谢与参考
+### 🙏 特别鸣谢与参考
 
 - [MikroTik / RouterOS](https://mikrotik.com/)
 - [Proxmox VE (PVE)](https://www.proxmox.com/)
