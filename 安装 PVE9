@@ -1,0 +1,221 @@
+# 安装与配置 Proxmox VE 9 (PVE 9)
+
+> 我的小主机是“零刻” EQ12 i3-N300/16G/500G SSD/Duo Lan 2.5G,安装了PVE9，做为家族网络主机；
+> 在PVE9上配置了一个Routers虚拟机，两个Debian12虚拟机（分别是路由主机和从机），从而实现了家庭网络的全网访问。
+
+---
+
+## 🌟 硬件平台与拓扑规划
+
+- **硬件规格**：
+  - 机型：零刻 (Beelink) EQ12
+  - CPU：Intel Core i3-N300 (8 核 8 线程, 睿频 3.8GHz, TDP 7W-15W, 全能低功耗能效核心)
+  - 内存：16GB DDR5 4800MHz
+  - 存储：500GB M.2 NVMe PCIe 3.0 SSD
+  - 网卡：双 Intel i225-V / i226-V 2.5G 原生高速网口 (LAN1 / LAN2)
+- **虚拟化拓扑**：
+  - **VM 1 (主路由/路由器系统)**：拨号/DHCP/主路由网关（WAN 接入 + LAN 分配）。
+  - **VM 2 (Debian 12 主旁路由)**：运行 daed (eBPF) + sing-box 1.14+ + mosdns + Keepalived (Master, 10.10.11.7)。
+  - **VM 3 (Debian 12 从旁路由)**：由主旁路由克隆生成，运行相同环境 + Keepalived (Backup, 10.10.11.8)。
+  - **高可用 VIP**：`10.10.11.10`（全屋终端的默认网关与 DNS 指向 VIP，实现秒级无感漂移容灾）。
+
+---
+
+## 1. 硬件 BIOS 关键配置 (零刻 EQ12)
+
+开机连续按下 `Delete` 键进入 BIOS 设置：
+
+1. **开启 Intel 虚拟化支持**：
+   - 进入 `Advanced` -> `CPU Configuration`
+   - 将 `Intel (VMX) Virtualization Technology` 设置为 **`Enabled`**
+   - 将 `VT-d`（Directed I/O 硬件直通）设置为 **`Enabled`**
+2. **通电自启 (AC Power Loss)**：
+   - 进入 `Chipset` -> `PCH-IO Configuration` -> `State After G3`
+   - 设置为 **`Power On`**（断电恢复后小主机自动开机启动 PVE）
+3. **安全启动 (Secure Boot)**：
+   - 进入 `Security` -> `Secure Boot`
+   - 设置为 **`Disabled`**（避免部分非签名引导及内核模块加载受限）
+4. 保存退出：按下 `F4` 选择 `Save & Exit`。
+
+---
+
+## 2. PVE 9 安装镜像准备与写盘
+
+1. **镜像下载**：
+   - 访问官方下载源：[Proxmox VE ISO Downloads](https://www.proxmox.com/en/downloads/proxmox-virtual-environment/iso)
+   - 下载最新的 `Proxmox VE 9.x ISO Installer` 并核对 `SHA256SUM` 校验值。
+2. **U 盘写盘制作**：
+   - **Windows / macOS**：推荐使用 [BalenaEtcher](https://etcher.balena.io/) 或 [Rufus](https://rufus.ie/)（以 `DD 镜像模式` 写入）。
+   - **Ventoy**：直接将 ISO 镜像拷贝至已安装 Ventoy 的 U 盘中即可直接引导。
+
+---
+
+## 3. PVE 9 系统安装流程
+
+1. 将制作好的 U 盘插入零刻 EQ12，开机按 `F7` 调出引导菜单，选择 UEFI 启动项。
+2. 在安装引导主界面选择 **`Install Proxmox VE (Graphical)`**（图形化安装）。
+3. **协议与目标磁盘 (Target Harddisk)**：
+   - 点击 `I Agree` 同意 EULA 协议；
+   - 目标硬盘选择内置的 `500GB NVMe SSD`；
+   - 点击 `Options`：文件系统推荐默认 `ext4`（或追求快照一致性与防断电保护可选用 `zfs (RAID0)`）。
+4. **国家与时区**：
+   - Country: `China`
+   - Time zone: `Asia/Shanghai`
+   - Keymap: `U.S. English`
+5. **管理员密码与邮箱**：
+   - 设置 `root` 超级管理员密码；
+   - 填写管理员 Email（如 `admin@yourdomain.com`）。
+6. **网络管理接口配置 (Management Network Configuration)**：
+   - **Management Interface**：选择第一个 2.5G 物理网口（如 `enp1s0` / `ens18` 作为管理网卡，对应机身 LAN1）。
+   - **Hostname (FQDN)**：`pve.lan` 或 `pve.local`
+   - **IP Address (CIDR)**：`10.10.11.2/24`（给 PVE 宿主机分配独立的固定静态 IP）
+   - **Gateway**：`10.10.11.11`（主路由 IP）或现有网关
+   - **DNS Server**：`10.10.11.11` 或公共 DNS（如 `223.5.5.5`）
+7. **确认并安装**：
+   - 检查 Summary 摘要信息无误后，点击 `Install` 开始自动分区并写入底层系统；
+   - 安装完成后点击 `Reboot` 重启，拔出安装 U 盘。
+
+---
+
+## 4. PVE 9 底层初始化与换源优化
+
+使用局域网电脑浏览器访问 PVE Web 控制台：
+```text
+https://10.10.11.2:8006
+```
+（账号 `root`，密码为您安装时设定的密码，语言可切换为 `中文 (Simplified Chinese)`）。
+
+也可以直接通过 SSH 登录 PVE 宿主机终端进行快速配置：
+```bash
+ssh root@10.10.11.2
+```
+
+### 4.1. 切换国内优质镜像源 (Debian Trixie + PVE 9)
+
+Debian 12/13 及 PVE 9 采用全新的 deb822 标准源格式：
+
+```bash
+# 1. 备份并替换 Debian 系统软件源为清华大学开源镜像站
+cat > /etc/apt/sources.list.d/debian.sources << 'EOF'
+Types: deb
+URIs: https://mirrors.tuna.tsinghua.edu.cn/debian
+Suites: trixie trixie-updates trixie-backports
+Components: main contrib non-free non-free-firmware
+Signed-By: /usr/share/keyrings/debian-archive-keyring.gpg
+EOF
+
+# 2. 替换 PVE 9 无订阅非企业版免费软件源
+cat > /etc/apt/sources.list.d/pve-no-subscription.sources << 'EOF'
+Types: deb
+URIs: https://mirrors.tuna.tsinghua.edu.cn/proxmox/debian/pve
+Suites: trixie
+Components: pve-no-subscription
+Signed-By: /etc/apt/trusted.gpg.d/proxmox-release-trixie.gpg
+EOF
+
+# 3. 禁用企业付费订阅提示源 (避免 apt update 报错 401)
+rm -f /etc/apt/sources.list.d/pve-enterprise.list /etc/apt/sources.list.d/pve-enterprise.sources
+
+# 4. 替换 CT 容器模板源 (LXC 镜像源)
+sed -i.bak "s#http://download.proxmox.com/images#https://mirrors.tuna.tsinghua.edu.cn/proxmox/images#g" /usr/share/perl5/PVE/APLInfo.pm
+```
+
+### 4.2. 移除 Web 登录时的“无有效订阅”弹窗
+
+```bash
+sed -Ezi.bak "s/(Ext.Msg.show\(\{\s+title: gettext\('No valid sub)/void\(\{ \/\//g" /usr/share/javascript/proxmox-widget-toolkit/proxmoxlib.js
+systemctl restart pveproxy.service
+```
+
+### 4.3. 更新系统并安装实用基础工具
+
+```bash
+apt-get update && apt-get dist-upgrade -y
+apt-get install curl wget vim htop lm-sensors ethtool net-tools -y
+```
+
+---
+
+## 5. CPU 调优与硬件直通 (PCIe Passthrough)
+
+针对 Intel i3-N300 核心开启硬件直通与功耗性能调度：
+
+### 5.1. 开启 IOMMU 内核参数
+
+编辑 `/etc/default/grub`：
+```bash
+nano /etc/default/grub
+```
+找到 `GRUB_CMDLINE_LINUX_DEFAULT` 并修改为：
+```text
+GRUB_CMDLINE_LINUX_DEFAULT="quiet intel_iommu=on iommu=pt pcie_acs_override=downstream,multifunction"
+```
+更新 Grub 引导：
+```bash
+update-grub
+```
+
+### 5.2. 加载 VFIO 直通内核模块
+
+```bash
+cat >> /etc/modules << 'EOF'
+vfio
+vfio_iommu_type1
+vfio_pci
+EOF
+
+# 更新 initramfs
+update-initramfs -u -k all
+```
+
+---
+
+## 6. PVE 9 双 2.5G 网卡虚拟网络规划
+
+零刻 EQ12 拥有两颗 Intel 2.5G 网卡（通常识别为 `enp1s0` 和 `enp2s0`）：
+
+在 PVE 管理后台 -> `节点 (pve)` -> `系统` -> `网络` 中规划配置两个 Linux Bridge（虚拟交换机）：
+
+1. **`vmbr0` (LAN 局域网桥接)**：
+   - 桥接物理网口：`enp1s0` (对应机身 LAN1)
+   - IPv4/CIDR：`10.10.11.2/24`
+   - 网关：`10.10.11.10`（指向 Keepalived VIP，实现 PVE 宿主机自身流量也走高可用加速）
+   - 用途：承载 PVE 后台管理、局域网物理交换机/AP 接入、主路由 LAN 口、各虚拟机业务通信。
+2. **`vmbr1` (WAN 互联网桥接，专供主路由)**：
+   - 桥接物理网口：`enp2s0` (对应机身 LAN2)
+   - 不配置任何 IP 地址（纯物理透传）
+   - 用途：连接光猫上网宽带接口，分配给 Routers 主路由虚拟机的 WAN 口进行拨号。
+
+---
+
+## 7. 虚拟机架构部署与编排
+
+在零刻 EQ12 的 8 核 N300 + 16G 内存配置下，资源分配黄金方案如下：
+
+| 虚拟机 ID | 角色名称 | 操作系统 | CPU 分配 | 内存 | 网卡配置 | 业务职责 |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **VM 100** | **Routers (主路由)** | iStoreOS / OpenWrt / ROS | 2 核 (Host) | 2048 MB | `vmbr1`(WAN) + `vmbr0`(LAN) | PPPoE 宽带拨号、DHCP 分发、基础 NAT 转发 (IP: 10.10.11.11) |
+| **VM 101** | **Debian 12 (主旁路由 A)** | Debian 12 (x86_64) | 4 核 (Host) | 4096 MB | `vmbr0` (ens18: 10.10.11.7) | eBPF daed + Sing-box 1.14 + MosDNS + Keepalived (Master: VIP 10.10.11.10) |
+| **VM 102** | **Debian 12 (从旁路由 B)** | Debian 12 (x86_64) | 2 核 (Host) | 2048 MB | `vmbr0` (ens18: 10.10.11.8) | 由 VM 101 克隆，运行相同分流栈 + Keepalived (Backup: VIP 10.10.11.10) |
+
+### 7.1. 快速克隆备机流程
+1. 在 VM 101 上完成 Debian 12 基础优化、daed、mosdns 与 sing-box 配置并验证通过；
+2. 关机或创建快照，在 PVE 界面右键 VM 101 -> 选择 **`克隆 (Clone)`** -> 命名为 `Debian-Router-Backup`（VM ID 102）；
+3. 启动 VM 102，仅需修改 `/etc/network/interfaces` 中的静态 IP 为 `10.10.11.8` 并调整 `/etc/keepalived/keepalived.conf` 中的 `priority 90`；
+4. 启动从机服务，即可实现零成本、免重复折腾的双机高可用热备！
+
+---
+
+## 8. PVE 自动化定时备份保障
+
+为了保证整套软路由配置安全，配置 PVE 内置定时备份作业：
+
+1. 进入 PVE -> **`数据中心`** -> **`备份`** -> 点击 **`添加`**；
+2. **节点**：全部节点；
+3. **存储**：`local`（或挂载的外置 USB / NAS 存储）；
+4. **计划**：每周日或每月 1/16 号凌晨 `03:30` (`*-01,16 03:30`)；
+5. **选择虚拟机**：勾选 VM 100 (Routers)、VM 101 (主旁路由)、VM 102 (从旁路由)；
+6. **压缩**：`ZSTD (快速高压缩比)`；
+7. **模式**：`快照 (Snapshot)`（热备份，无需中断家庭网络运行）。
+
+至此，基于零刻 EQ12 迷你小主机的 PVE 9 高性能、高可用全网加速家庭网络底层平台搭建完毕！

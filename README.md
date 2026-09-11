@@ -32,11 +32,12 @@
 
 | 步骤 | 说明文档 | 核心内容 |
 | :--- | :--- | :--- |
+| **步骤 0 (底层平台)** | [安装 PVE9](./安装%20PVE9) | 零刻 EQ12 小主机安装 Proxmox VE 9，规划双 2.5G 网卡与主备虚拟机 |
 | **步骤 1** | [准备网络环境](./准备网络环境) | 配置静态 IP 与固定 DNS、开启内核转发、关闭 ICMP 重定向、持久化 iptables |
 | **步骤 2** | [安装 sing-box](./安装%20sing-box) | APT deb822 安装 Sing-box 1.14+、Socks5 7891 进站、最新多协议出站及 MetaCubeXD |
 | **步骤 3** | [安装 mosdns](./安装%20mosdns) | 安装 mosdns v5，配置国内外域名/IP 规则集与本地 DNS 缓存 |
 | **步骤 4** | [安装 daed](./安装%20daed) | 安装 daed、配置 eBPF 透明代理分流规则、关联 Sing-box 节点 |
-| **步骤 5 (可选/进阶)** | [安装 keepalived](./安装%20keepalived) | 克隆虚拟机搭建 Keepalived 双机高可用旁路由，实现 VIP 故障无缝漂移 |
+| **步骤 5 (进阶容灾)** | [安装 keepalived](./安装%20keepalived) | 克隆虚拟机搭建 Keepalived 双机高可用旁路由，实现 VIP 故障无缝漂移 |
 
 ---
 
@@ -45,22 +46,22 @@
 ```text
 [ 局域网终端 (PC / 手机 / TV) ]
            │
-           │ (DHCP 网关 & DNS 均指向 VIP: 10.10.11.10)
+           │ (DHCP 网关 & DNS 均指向 Keepalived VIP: 10.10.11.10)
            ▼
-[ Keepalived 虚拟路由冗余 (VIP: 10.10.11.10) ]
-     ├── 主机 A (Master: 10.10.11.7, priority 100)
-     └── 备机 B (Backup: 10.10.11.8, priority 90)
-           │
-           ├─ daed (eBPF 流量劫持与路由判定)
-           ├─ mosdns (:53 国内外精准分流防污染)
-           └─ sing-box (:7891 出站代理核心)
-           │
-           │ (国内直连流量 / 代理外网流量出站)
-           ▼
-[ 主路由 (ROS / OpenWrt / 物理路由器: 10.10.11.11) ]
-           │
-           ▼
-    [ 互联网光猫 / WAN ]
+[ 零刻 EQ12 小主机 (PVE 9 宿主机: 10.10.11.2) ]
+     ├─ [VM 100: Routers 主路由 (10.10.11.11, vmbr1-WAN + vmbr0-LAN)]
+     │
+     └─ [Keepalived 虚拟路由冗余 (VIP: 10.10.11.10)]
+          ├── [VM 101: Debian 12 主机 A (10.10.11.7, priority 100)]
+          └── [VM 102: Debian 12 备机 B (10.10.11.8, priority 90)]
+                │
+                ├─ daed (eBPF 流量劫持与路由判定)
+                ├─ mosdns (:53 国内外精准分流防污染)
+                └─ sing-box (:7891 出站代理核心)
+                │
+                │ (国内直连流量 / 代理外网流量出站)
+                ▼
+   [ 光猫 / 互联网 WAN ]
 ```
 
 ---
