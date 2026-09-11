@@ -1,76 +1,104 @@
-# Debian 12 高性能旁路由全套搭建指南 🚀
+# 零刻 EQ12 + PVE 9 家庭全网加速与高可用软路由全套搭建指南 🚀
 
-> 基于 **Debian 12 + daed (eBPF) + Sing-box (1.14+) + mosdns** 的现代低延迟、高吞吐、高稳定旁路由全套架构方案。
+> 基于 **零刻 EQ12 (Intel i3-N300 双 2.5G) + Proxmox VE 9 + RouterOS 主路由 + Debian 12 (daed eBPF + Sing-box 1.14+ + MosDNS + Keepalived 双机高可用旁路由)** 的现代低延迟、高吞吐、高稳定全能家庭网络全套架构方案。
 
 ---
 
 ## 🌟 架构演进与设计亮点
 
-本项目记录了从传统 OpenWrt (PassWall + MosDNS) 切换到纯粹的 **Debian 12 Linux 旁路由** 的完整部署流程。相较于虚拟机 OpenWrt，原生 Linux 方案具有更好的内核资源调度、更高的网络吞吐与极佳的连接稳定性。
+本项目记录了从传统单体虚拟机 OpenWrt (PassWall + MosDNS) 演进到 **PVE 9 虚拟化底座 + RouterOS 纯净主路由 + Debian 12 双机热备 Linux 旁路由** 的完整部署流程。相较于传统方案，具备企业级的网络吞吐能力、强悍的抗故障容灾韧性与极致的代理性能。
 
 ### 核心特性
-1. **Linux 内核深度优化**：
-   - 开启内核 `net.ipv4.ip_forward` 转发。
-   - **🔴 彻底关闭 ICMP 重定向 (Send Redirects)**：解决局域网客户端与主路由同网段转发时的非对称路由与旁路失效问题。
-   - 原生开启 **BBR** 拥塞控制算法，提升跨国高丢包线路表现。
-   - 完整禁用 IPv6，规避国内运营商 IPv6 造成的代理漏网。
-2. **Sing-box (1.14+) 极速代理核心**：
-   - 适配最新的 Debian 12 **deb822 官方 APT 源**规范，支持 `apt` 一键安装与平滑升级。
-   - 规避 Sing-box 1.12+ / 1.14+ 废弃语法，提供现代 **VLESS-Reality、Hysteria 2、TUIC v5** 出站规范。
-   - 集成最新的 **MetaCubeXD** Web 控制面板（`:9090`），随时随地一键测速与手动切节点。
-3. **daed (eBPF) 透明分流**：
-   - 利用 Linux 内核级 eBPF 技术在协议栈顶层拦截转发，无需笨重的 iptables 规则链，CPU 占用极低。
-4. **架构极简（彻底移除 Dnsmasq）**：
-   - 旧方案中因早期配置调试曾临时使用 Dnsmasq 胶水层；**现已彻底弃用 Dnsmasq**。
-   - DNS 直由 mosdns 进行国内外智能分流与防污染解析，链路更短、解析延迟更低。
+1. **PVE 9 现代虚拟化平台 (零刻 EQ12 小主机)**：
+   - 基于 8 核 Intel i3-N300 + 16G DDR5 + 500G NVMe SSD + 双 2.5G 网卡；
+   - 规划 `vmbr1` (WAN 拨号直连光猫) 与 `vmbr0` (LAN 局域网桥接与各 VM 互联)；
+   - 开启 IOMMU 硬件直通与 CPU Host 指令集直通，发挥加解密最高能效。
+2. **RouterOS (CHR) 工业级主路由**：
+   - 专职负责高速 PPPoE 宽带拨号、基础 NAT 转发与 DHCP 地址租约分发；
+   - **核心联动**：DHCP 下发网关与 DNS 全权指向 Keepalived VIP (`10.10.11.10`)，主路由与旁路由职责清晰分离。
+3. **Debian 12 + daed (eBPF) + Sing-box 1.14+ 极速旁路由**：
+   - 采用 Linux 内核级 **eBPF** 技术在链路层截流分流，免去繁琐的 iptables，CPU 负载极低；
+   - Sing-box 1.14+ 官方 deb822 源规范管理，搭载 VLESS-Reality-Brutal (TCP Brutal 500/50)、VLESS-Reality-gRPC、Hysteria 2、TUIC v5 四重高速出站协议；
+   - 集成 MetaCubeXD Web 仪表板 (`:9090`) 实时测速与节点优选。
+4. **MosDNS v5 国内外智能防污染分流**：
+   - 本地轻量监听 `:53`，精准分流国内白名单直连与海外 AI/常用域名代理，搭配大容量内存缓存；
+   - 彻底摒弃传统 Dnsmasq 胶水层，解析链路更短、首屏响应更快。
+5. **Keepalived 双机秒级无感热备 (高可用容灾)**：
+   - 通过 PVE 一键克隆生成 Master (`10.10.11.7`) 与 Backup (`10.10.11.8`) 双旁路由节点；
+   - 共同持有 VIP `10.10.11.10`，采用 `nopreempt` 非抢占模式与 MosDNS 业务级心跳探针，任何单机维护重启均不影响全屋上网。
 
 ---
 
-## 📂 部署指南目录
+## 📂 部署指南顺序目录
 
-请按照以下顺序依序配置：
+请按照以下顺序依序配置各模块：
 
-| 步骤 | 说明文档 | 核心内容 |
+| 章节顺序 | 说明文档 | 核心内容 |
 | :--- | :--- | :--- |
-| **步骤 0 (底层平台)** | [安装 PVE9](./安装%20PVE9) | 零刻 EQ12 小主机安装 Proxmox VE 9，规划双 2.5G 网卡与主备虚拟机 |
-| **步骤 1** | [安装 Debian12 虚拟机](./安装%20Debian12%20虚拟机) | PVE 创建 Debian 12 旁路由虚拟机 (VirtIO 4核4G)、ens18 静态 IP 与 ICMP 防重定向加固 |
-| **步骤 2** | [安装 sing-box](./安装%20sing-box) | APT deb822 安装 Sing-box 1.14+、Socks5 7891 进站、最新多协议出站及 MetaCubeXD |
-| **步骤 3** | [安装 mosdns](./安装%20mosdns) | 安装 mosdns v5，配置国内外域名/IP 规则集与本地 DNS 缓存 |
-| **步骤 4** | [安装 daed](./安装%20daed) | 安装 daed、配置 eBPF 透明代理分流规则、关联 Sing-box 节点 |
-| **步骤 5 (进阶容灾)** | [安装 keepalived](./安装%20keepalived) | 克隆虚拟机搭建 Keepalived 双机高可用旁路由，实现 VIP 故障无缝漂移 |
+| **步骤 00** | [00. 安装 PVE9](./00.安装%20PVE9.md) | 零刻 EQ12 BIOS 调优、PVE 9 系统安装、清华源配置、双 2.5G 虚拟网络与硬件直通 |
+| **步骤 01** | [01. 安装 RouterOS 虚拟机](./01.安装%20RouterOS%20虚拟机.md) | 导入 CHR 官方 OVA/RAW 磁盘、WAN/LAN 接口规划、PPPoE 拨号与 DHCP VIP 网关下发 |
+| **步骤 02** | [02. 安装 Debian12 虚拟机](./02.安装%20Debian12%20虚拟机.md) | 创建 4核4G VirtIO 虚拟机、ens18 静态 IP/DNS、开启 BBR、关闭 ICMP 重定向防环 |
+| **步骤 03** | [03. 安装 sing-box](./03.安装%20sing-box.md) | APT deb822 安装 Sing-box 1.14+、Socks5 7891 进站、四重协议出站与 MetaCubeXD 面板 |
+| **步骤 04** | [04. 安装 mosdns](./04.安装%20mosdns.md) | 安装 mosdns v5，配置国内外域名/IP 规则集、分流策略与本地 DNS 缓存 |
+| **步骤 05** | [05. 安装 daed](./05.安装%20daed.md) | 安装 daed v1.27.0+，配置 eBPF 透明代理规则、AI 平台分流与 ToWorld 节点绑定 |
+| **步骤 06** | [06. 安装 keepalived](./06.安装%20keepalived.md) | PVE 克隆备机、部署 Keepalived VRRP 双机热备 (VIP: 10.10.11.10)、DNS 业务心跳检测 |
 
 ---
 
-## 💡 网络拓扑示例参考
+## 💡 全局网络拓扑架构图
 
 ```text
-[ 局域网终端 (PC / 手机 / TV) ]
-           │
-           │ (DHCP 网关 & DNS 均指向 Keepalived VIP: 10.10.11.10)
-           ▼
-[ 零刻 EQ12 小主机 (PVE 9 宿主机: 10.10.11.2) ]
-     ├─ [VM 100: Routers 主路由 (10.10.11.11, vmbr1-WAN + vmbr0-LAN)]
-     │
-     └─ [Keepalived 虚拟路由冗余 (VIP: 10.10.11.10)]
-          ├── [VM 101: Debian 12 主机 A (10.10.11.7, priority 100)]
-          └── [VM 102: Debian 12 备机 B (10.10.11.8, priority 90)]
-                │
-                ├─ daed (eBPF 流量劫持与路由判定)
-                ├─ mosdns (:53 国内外精准分流防污染)
-                └─ sing-box (:7891 出站代理核心)
-                │
-                │ (国内直连流量 / 代理外网流量出站)
-                ▼
-   [ 光猫 / 互联网 WAN ]
+               [ 互联网光猫 (宽带入户) ]
+                           │
+                           │ (物理直连 2.5G WAN 口 - enp2s0)
+                           ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ 零刻 EQ12 物理主机 (Intel i3-N300 / 16G DDR5 / 500G SSD / 双 2.5G 网卡)      │
+│ Proxmox VE 9 宿主机 (管理 IP: 10.10.11.2)                                    │
+│                                                                             │
+│  ┌───────────────────────────────────────────────────────────────────────┐  │
+│  │ [VM 100] RouterOS 主路由 (CHR v7.x)                                    │  │
+│  │  - WAN 口 (vmbr1 -> enp2s0): PPPoE 拨号获取公网 IP / 光猫 DHCP          │  │
+│  │  - LAN 口 (vmbr0 -> enp1s0): IP 10.10.11.11/24 (基础 NAT 转发)         │  │
+│  │  - DHCP 服务: 网段 10.10.11.100-200, 网关 & DNS 均指向 VIP 10.10.11.10  │  │
+│  └───────────────────────────────────────────────────────────────────────┘  │
+│                                      │ (vmbr0 内部虚拟局域网交换机)            │
+│                                      ▼                                      │
+│  ┌───────────────────────────────────────────────────────────────────────┐  │
+│  │ Keepalived 虚拟路由冗余高可用集群 (VIP: 10.10.11.10)                    │  │
+│  │                                                                       │  │
+│  │  ┌─────────────────────────────────┐   ┌───────────────────────────┐  │  │
+│  │  │ [VM 101] 主旁路由 RouterA (主机) │   │ [VM 102] 从旁路由 RouterB │  │  │
+│  │  │ - 物理 IP: 10.10.11.7 (ens18)    │   │ - 物理 IP: 10.10.11.8     │  │  │
+│  │  │ - VRRP 优先级: 100 (Master)      │   │ - VRRP 优先级: 90 (Backup)│  │  │
+│  │  │ - 模式: 双 BACKUP + nopreempt    │   │ - 模式: 双 BACKUP + noprem│  │  │
+│  │  │ - daed (eBPF 透明代理分流)       │   │ - 镜像克隆相同分流服务栈   │  │  │
+│  │  │ - mosdns (:53 国内外智能解析)    │   │                           │  │  │
+│  │  │ - sing-box (:7891 四重协议核心)   │   │                           │  │  │
+│  │  │ - check_dns.sh 业务级心跳探针    │   │                           │  │  │
+│  │  └─────────────────────────────────┘   └───────────────────────────┘  │  │
+│  └───────────────────────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                       │ (物理网口 2.5G LAN 口 - enp1s0)
+                                       ▼
+                     [ 局域网物理交换机 / AP 路由器 ]
+                                       │
+                ┌──────────────────────┴──────────────────────┐
+                ▼                                             ▼
+     [ 有线终端 (PC / NAS / TV) ]                  [ 无线终端 (手机 / iPad / IoT) ]
+     (获取 DHCP: 网关=10.10.11.10, DNS=10.10.11.10 -> 享受极速低延迟与全自动高可用容灾)
 ```
 
 ---
 
 ## 🙏 特别鸣谢与参考
 
+- [MikroTik / RouterOS](https://mikrotik.com/)
+- [Proxmox VE (PVE)](https://www.proxmox.com/)
 - [SagerNet / Sing-box](https://github.com/SagerNet/sing-box)
 - [daeuniverse / daed](https://github.com/daeuniverse)
 - [IrineSistiana / mosdns](https://github.com/IrineSistiana/mosdns)
+- [Gitee @callmer / PVE & RouterOS 折腾笔记](https://gitee.com/callmer)
 - [YouTube @billmike888](https://www.youtube.com/@billmike888)
 - [YouTube @idevShare](https://www.youtube.com/@idevShare)
 - [YouTube @孔昊天的折腾日记](https://www.youtube.com/@孔昊天的折腾日记)
