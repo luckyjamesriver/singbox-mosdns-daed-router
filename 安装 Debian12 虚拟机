@@ -1,0 +1,233 @@
+# 安装与配置 Debian 12 旁路由虚拟机 (PVE 9 平台)
+
+> 说明：本指南详细记录在 PVE 9 虚拟化平台上创建并安装 **Debian 12 旁路由虚拟机** 的全流程，并基于真实硬件配置完成网卡接口调整、系统环境初始化、高吞吐内核转发调优与 ICMP 防重定向加固。
+> 
+> **局域网规划示例**：
+> - **Debian 12 旁路由主机 (Node A)**：`10.10.11.7` (网卡 `ens18`)
+> - **Debian 12 旁路由从机 (Node B)**：`10.10.11.8` (网卡 `ens18`，由主机克隆)
+> - **主路由 IP (网关与宽带出口)**：`10.10.11.11`
+> - **Keepalived 高可用虚拟路由 IP (VIP)**：`10.10.11.10`
+> - **子网掩码**：`255.255.255.0` (`/24`)
+
+---
+
+## 1. PVE 9 虚拟机硬件配置规范 (参考实际拓扑)
+
+在 PVE 管理后台点击右上角 **`创建虚拟机`**，按以下参数配置旁路由虚拟机（VM 201 / RouterA）：
+
+| 配置项 | 参数值 | 说明 |
+| :--- | :--- | :--- |
+| **常规 (General)** | VM ID: `201`，名称: `RouterA` | 节点选择 `pve` |
+| **操作系统 (OS)** | `debian-12.x.x-amd64-DVD-1.iso` 或 `netinst.iso` | 存储位置: `local:iso`，类别: `Linux (6.x - 2.6 Kernel)` |
+| **系统 (System)** | 机型: `默认 (i440fx)`，BIOS: `默认 (SeaBIOS)`，SCSI 控制器: `VirtIO SCSI` | 保持标准稳定架构 |
+| **磁盘 (Disks)** | 总线: `SCSI (scsi0)`，存储: `local` / `local-lvm`，大小: `32 GiB`，格式: `qcow2` | VirtIO SCSI 驱动具有原生最佳 IO 吞吐 |
+| **CPU (Processor)** | `4 核 (1 Sockets, 4 Cores)`，类别: **`host`** | 直通宿主机 CPU 指令集 (AES、AVX2 等)，极大提升代理加解密性能 |
+| **内存 (Memory)** | `4.00 GiB (4096 MiB)` | 禁用气球驱动 (Ballooning) 或设为固定分配，保障低延迟 |
+| **网络 (Network)** | 桥接: `vmbr0`，模型: **`VirtIO (半虚拟化)`**，防火墙: **不勾选** | MAC 地址自动生成，在 Debian 内部识别为 **`ens18`** |
+
+---
+
+## 2. Debian 12 操作系统快速安装要点
+
+1. 启动虚拟机，在控制台 (Console) 选择 **`Install`** (文本安装) 或 **`Graphical install`** (图形化安装)。
+2. **语言与键盘**：Language 选择 `English` (或 `中文简体`)，Area 选择 `Hong Kong` / `China`，Keymap 选择 `American English`。
+3. **网络与主机名**：
+   - Hostname: `RouterA` (备机为 `RouterB`)
+   - Domain name: 可留空或填 `lan`
+4. **账户与密码**：
+   - 设置 `root` 账户超级管理员密码；
+   - 创建普通管理用户（如 `admin`）并设置密码。
+5. **磁盘分区**：
+   - 选择 `Guided - use entire disk` (向导 - 使用整个磁盘) -> 选中 32GB VirtIO SCSI 虚拟硬盘；
+   - 分区方案推荐选择 `All files in one partition` (所有文件放在单一分区)。
+6. **软件选择 (Software selection - 关键)**：
+   - **取消勾选** `Debian desktop environment` (桌面环境) 与 `GNOME`；
+   - **勾选** `SSH server`；
+   - **勾选** `standard system utilities` (标准系统工具)。
+7. **安装 GRUB 引导器**：
+   - 确认将 GRUB 安装到主引导记录 (MBR)，设备选择 `/dev/sda`。
+8. 安装完成，点击 `Continue` 自动重启并拔出虚拟光驱。
+
+---
+
+## 3. SSH 远程管理配置 (允许 Root 登录)
+
+在 PVE 控制台登录 root 用户，开启 SSH 远程访问以便后续使用 SSH 客户端操作：
+
+```bash
+# 编辑 SSH 配置文件
+nano /etc/ssh/sshd_config
+```
+
+找到 `PermitRootLogin` 改为 `yes`，或在文件末尾直接追加：
+
+```text
+PermitRootLogin yes
+```
+
+保存并重启 SSH 服务：
+
+```bash
+systemctl restart ssh
+systemctl status ssh
+```
+
+---
+
+## 4. 确认网卡与配置静态 IP (对齐 ens18 架构)
+
+### 4.1 确认网卡识别名称
+
+```bash
+ip a
+```
+在 PVE VirtIO 虚拟网卡环境下，主网卡名称为 **`ens18`**。
+
+### 4.2 配置静态 IP 与关键 DNS 解析
+
+编辑网卡接口文件：
+
+```bash
+nano /etc/network/interfaces
+```
+
+写入以下标准静态 IP 配置。**特别注意：必须显式配置 `dns-nameservers`**，确保开机后系统具备正确的 DNS 解析能力：
+
+```text
+source /etc/network/interfaces.d/*
+
+# 本地环回接口
+auto lo
+iface lo inet loopback
+
+# PVE VirtIO 主网卡配置 (ens18)
+auto ens18
+allow-hotplug ens18
+iface ens18 inet static
+    address 10.10.11.7/24
+    gateway 10.10.11.11
+    # 静态 DNS：首选主路由，备用公共 DNS
+    dns-nameservers 10.10.11.11 223.5.5.5 119.29.29.29
+```
+
+> **提示**：如果是克隆出来的**从机 (RouterB)**，仅需将 `address` 修改为 `10.10.11.8/24` 即可。
+
+重启网络使配置生效：
+
+```bash
+systemctl restart networking
+```
+
+---
+
+## 5. 替换国内镜像源与安装必备工具包
+
+```bash
+# 1. 替换为清华大学开源镜像站 (Debian 12 Bookworm)
+cat > /etc/apt/sources.list << 'EOF'
+deb https://mirrors.tuna.tsinghua.edu.cn/debian/ bookworm main contrib non-free non-free-firmware
+deb https://mirrors.tuna.tsinghua.edu.cn/debian/ bookworm-updates main contrib non-free non-free-firmware
+deb https://mirrors.tuna.tsinghua.edu.cn/debian/ bookworm-backports main contrib non-free non-free-firmware
+deb https://mirrors.tuna.tsinghua.edu.cn/debian-security bookworm-security main contrib non-free non-free-firmware
+EOF
+
+# 2. 刷新源并升级系统
+apt update && apt upgrade -y
+
+# 3. 安装常用系统运维、网络诊断与防火墙持久化工具
+apt install wget curl unzip sudo vim net-tools iputils-ping iptables iptables-persistent traceroute dnsutils -y
+```
+
+---
+
+## 6. 彻底禁用 IPv6（保障代理分流不漏网）
+
+为了防止客户端通过运营商分配的 IPv6 地址直连外网从而导致代理规则失效，彻底关闭 IPv6：
+
+```bash
+cat > /etc/sysctl.d/99-disable-ipv6.conf << 'EOF'
+net.ipv6.conf.all.disable_ipv6 = 1
+net.ipv6.conf.default.disable_ipv6 = 1
+net.ipv6.conf.lo.disable_ipv6 = 1
+EOF
+
+# 使配置立即生效
+sysctl -p /etc/sysctl.d/99-disable-ipv6.conf
+```
+
+执行 `ip a` 确认所有接口均无 `inet6` 地址即表示生效。
+
+---
+
+## 7. 内核转发与旁路由核心优化（🔴 关键生命线）
+
+旁路由必须开启内核 IPv4 转发；更重要的是，**必须彻底关闭 ICMP 重定向 (Send Redirects)**！
+
+> **为什么必须关闭 ICMP 重定向？**  
+> 在旁路由拓扑中，终端流量发给旁路由（10.10.11.7），旁路由处理完国内流量后，需转发回同网段的主路由（10.10.11.11）。  
+> 此时 Linux 内核默认会发出 ICMP Redirect 数据包通知客户端“直接找主路由”，导致终端绕过旁路由甚至断网，引发严重的非对称路由故障。
+
+创建旁路由专用系统内核配置文件：
+
+```bash
+cat > /etc/sysctl.d/99-side-router.conf << 'EOF'
+# 1. 开启 IPv4 数据包转发
+net.ipv4.ip_forward = 1
+net.ipv4.conf.all.forwarding = 1
+net.ipv4.conf.default.forwarding = 1
+
+# 2. 彻底禁用 ICMP 重定向 (针对 ens18 网卡及全局)
+net.ipv4.conf.all.send_redirects = 0
+net.ipv4.conf.default.send_redirects = 0
+net.ipv4.conf.ens18.send_redirects = 0
+
+# 3. 启用 BBR 拥塞控制算法 (提升跨国代理吞吐稳定性)
+net.core.default_qdisc = fq
+net.ipv4.tcp_congestion_control = bbr
+EOF
+
+# 使内核配置立即生效
+sysctl -p /etc/sysctl.d/99-side-router.conf
+```
+
+### 放行并持久化 iptables 转发规则
+
+```bash
+# 允许数据包全局转发
+iptables -P FORWARD ACCEPT
+
+# 持久化规则至系统，防止重启丢失
+netfilter-persistent save
+```
+
+---
+
+## 8. 常用环境变量与命令行别名设置
+
+编辑 `~/.bashrc`：
+
+```bash
+vim ~/.bashrc
+```
+
+在末尾添加常用别名：
+
+```bash
+export LS_OPTIONS="--color=auto"
+eval "$(dircolors)"
+alias ls="ls $LS_OPTIONS"
+alias ll="ls $LS_OPTIONS -l"
+alias l="ls $LS_OPTIONS -lA"
+
+alias rm="rm -i"
+alias cp="cp -i"
+alias mv="mv -i"
+```
+
+使其生效：
+
+```bash
+source ~/.bashrc
+```
+
+至此，PVE 9 上的 Debian 12 旁路由虚拟机底层系统与网络环境部署完毕，具备高吞吐转发、BBR 加速与抗 ICMP 环路的稳定基础！

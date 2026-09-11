@@ -33,7 +33,7 @@
 | 步骤 | 说明文档 | 核心内容 |
 | :--- | :--- | :--- |
 | **步骤 0 (底层平台)** | [安装 PVE9](./安装%20PVE9) | 零刻 EQ12 小主机安装 Proxmox VE 9，规划双 2.5G 网卡与主备虚拟机 |
-| **步骤 1** | [准备网络环境](./准备网络环境) | 配置静态 IP 与固定 DNS、开启内核转发、关闭 ICMP 重定向、持久化 iptables |
+| **步骤 1** | [安装 Debian12 虚拟机](./安装%20Debian12%20虚拟机) | PVE 创建 Debian 12 旁路由虚拟机 (VirtIO 4核4G)、ens18 静态 IP 与 ICMP 防重定向加固 |
 | **步骤 2** | [安装 sing-box](./安装%20sing-box) | APT deb822 安装 Sing-box 1.14+、Socks5 7891 进站、最新多协议出站及 MetaCubeXD |
 | **步骤 3** | [安装 mosdns](./安装%20mosdns) | 安装 mosdns v5，配置国内外域名/IP 规则集与本地 DNS 缓存 |
 | **步骤 4** | [安装 daed](./安装%20daed) | 安装 daed、配置 eBPF 透明代理分流规则、关联 Sing-box 节点 |
