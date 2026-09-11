@@ -1,6 +1,6 @@
 # 安装与配置 MosDNS (适配 v5.3.4+ 最新版本)
 
-> MosDNS 是一款高度可定制、极速并发的 DNS 分流与转发器。在旁路由架构中，MosDNS 负责监听 `127.0.0.1:5335`，执行国内直连域名与国外分流域名的分流判定、缓存加速及防污染解析。
+> MosDNS 是一款高度可定制、极速并发的 DNS 分流与转发器。本配置针对国内各大应用（Apple、抖音/字节跳动 CDN、国内/海外域名）进行深度定向优化，内置大容量内存缓存，全面拦截广告与 IPv6 泄露，直接监听 `0.0.0.0:53`（TCP/UDP），作为家庭局域网的核心低延迟 DNS 服务器。
 
 ---
 
@@ -9,12 +9,12 @@
 当前 MosDNS 最新稳定版为 **v5.3.4**（可通过 GitHub API 自动匹配最新版本）：
 
 ```bash
-# 1. 创建工作目录
-mkdir -p /etc/mosdns
+# 1. 创建工作目录与规则目录
+mkdir -p /etc/mosdns/rules
 cd /tmp
 
 # 2. 自动获取并下载最新稳定版 Linux amd64 二进制包
-MOSDNS_URL=$(curl -fsSL https://api.github.com/repos/IrineSistiana/mosdns/releases/latest | jq -r ".assets[] | select(.name=="mosdns-linux-amd64.zip") | .browser_download_url")
+MOSDNS_URL=$(curl -fsSL https://api.github.com/repos/IrineSistiana/mosdns/releases/latest | jq -r ".assets[] | select(.name==\"mosdns-linux-amd64.zip\") | .browser_download_url")
 wget -O mosdns.zip "${MOSDNS_URL:-https://github.com/IrineSistiana/mosdns/releases/download/v5.3.4/mosdns-linux-amd64.zip}"
 
 # 3. 解压并安装到系统路径
@@ -58,32 +58,37 @@ systemctl daemon-reload
 
 ---
 
-## 3. 下载国内外分流规则与 IP 库
+## 3. 准备分流规则库文件 (`/etc/mosdns/rules/`)
 
-进入 `/etc/mosdns` 目录并拉取最新规则文件：
+MosDNS 启动时需要加载对应的规则文本文件。执行以下命令拉取官方维护的规则文件并创建对应规则存档：
 
 ```bash
-cd /etc/mosdns
+mkdir -p /etc/mosdns/rules
+cd /etc/mosdns/rules
 
-# 国内直连域名列表 (Loyalsoldier 维护)
-curl -fsSL https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/direct-list.txt -o /etc/mosdns/geosite_cn.txt
+# 1. 国内直连域名与 IP 段
+curl -fsSL https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/direct-list.txt -o /etc/mosdns/rules/geosite_cn.txt
+curl -fsSL https://raw.githubusercontent.com/Hackl0us/GeoIP2-CN/release/CN-ip-cidr.txt -o /etc/mosdns/rules/geoip_cn.txt
+touch /etc/mosdns/rules/force-cn.txt
 
-# 国内 IP 段 CIDR 列表
-curl -fsSL https://raw.githubusercontent.com/Hackl0us/GeoIP2-CN/release/CN-ip-cidr.txt -o /etc/mosdns/geoip_cn.txt
+# 2. 非大陆与代理域名
+curl -fsSL https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/proxy-list.txt -o /etc/mosdns/rules/geosite_geolocation-!cn.txt
+touch /etc/mosdns/rules/ai-proxy.txt
 
-# 常用非大陆域名列表
-curl -fsSL https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/proxy-list.txt -o /etc/mosdns/geosite_geolocation_noncn.txt
+# 3. Apple 专属域名
+curl -fsSL https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/apple.txt -o /etc/mosdns/rules/geosite_apple.txt 2>/dev/null || touch /etc/mosdns/rules/geosite_apple.txt
 
-# GFW 被封锁域名列表
-curl -fsSL https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/gfw.txt -o /etc/mosdns/gfw.txt
+# 4. 字节/抖音 CDN 专属域名
+touch /etc/mosdns/rules/geosite_byteplus.txt
 
-# 创建自定义 Hosts 文件 (备用)
-touch /etc/mosdns/hosts.txt
+# 5. 广告与拦截列表
+curl -fsSL https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/reject-list.txt -o /etc/mosdns/rules/reject-list.txt
+touch /etc/mosdns/rules/adblock.txt
 ```
 
 ---
 
-## 4. 编写 MosDNS 配置文件 (`/etc/mosdns/config.yaml`)
+## 4. 写入 MosDNS 核心配置 (`/etc/mosdns/config.yaml`)
 
 编辑 `/etc/mosdns/config.yaml`：
 
@@ -91,7 +96,7 @@ touch /etc/mosdns/hosts.txt
 nano /etc/mosdns/config.yaml
 ```
 
-写入以下经过优化的 v5 标准配置：
+写入以下深度优化的生产级分流配置：
 
 ```yaml
 log:
@@ -99,130 +104,248 @@ log:
   file: "/etc/mosdns/mosdns.log"
 
 plugins:
-  # 1. 规则集加载
-  - tag: "direct_domain"
-    type: domain_set
-    args:
-      files:
-        - "/etc/mosdns/geosite_cn.txt"
 
-  - tag: "direct_ip"
-    type: ip_set
-    args:
-      files:
-        - "/etc/mosdns/geoip_cn.txt"
+############################
+# 1️⃣ 缓存
+############################
+- tag: cache
+  type: cache
+  args:
+    size: 204800
+    lazy_cache_ttl: 86400
 
-  - tag: "hosts"
-    type: hosts
-    args:
-      files:
-        - "/etc/mosdns/hosts.txt"
+############################
+# 2️⃣ 域名 / IP 规则集
+############################
 
-  # 2. 高速内存缓存
-  - tag: "cache"
-    type: cache
-    args:
-      size: 65536
-      lazy_cache_ttl: 86400
-      dump_file: "/etc/mosdns/cache.dump"
+- tag: cn_domain
+  type: domain_set
+  args:
+    exps: ["lan", "local", "arpa"]
+    files:
+      - "/etc/mosdns/rules/force-cn.txt"
+      - "/etc/mosdns/rules/geosite_cn.txt"
 
-  # 3. 上游 DNS 服务器配置
-  # 国内上游 (直连，低延迟)：可指定为阿里DNS、DNSPod，或局域网主路由/防火墙
-  - tag: "local_forward"
-    type: forward
-    args:
-      concurrent: 2
-      upstreams:
-        - addr: "223.5.5.5:53"
-        - addr: "119.29.29.29:53"
+- tag: non_cn_domain
+  type: domain_set
+  args:
+    files:
+      - "/etc/mosdns/rules/geosite_geolocation-!cn.txt"
+      - "/etc/mosdns/rules/ai-proxy.txt"
 
-  # 国外上游 (防污染，走 TLS 或上层代理)：可配置 DoT (如 Google/Cloudflare)，或本地专用解析器
-  - tag: "remote_forward"
-    type: forward
-    args:
-      concurrent: 2
-      upstreams:
-        - addr: "tls://8.8.8.8:853"
-        - addr: "tls://1.1.1.1:853"
+- tag: apple_domain
+  type: domain_set
+  args:
+    files:
+      - "/etc/mosdns/rules/geosite_apple.txt"
 
-  # 4. 执行流程序列
-  - tag: "ttl_sequence"
-    type: sequence
-    args:
-      - exec: ttl 600-3600
-      - exec: accept
+- tag: byte_domain
+  type: domain_set
+  args:
+    files:
+      - "/etc/mosdns/rules/geosite_byteplus.txt"
 
-  - tag: "local_sequence"
-    type: sequence
-    args:
-      - exec: query_summary local_forward
-      - exec: $local_forward
-      - exec: goto ttl_sequence
+- tag: reject_domain
+  type: domain_set
+  args:
+    files:
+      - "/etc/mosdns/rules/reject-list.txt"
+      - "/etc/mosdns/rules/adblock.txt"
 
-  - tag: "remote_sequence"
-    type: sequence
-    args:
-      - exec: query_summary remote_forward
-      - exec: $remote_forward
-      - matches: "resp_ip $direct_ip"
-        exec: goto local_sequence
-      - exec: goto ttl_sequence
+- tag: cn_ip
+  type: ip_set
+  args:
+    files:
+     - "/etc/mosdns/rules/geoip_cn.txt"
 
-  - tag: "final"
-    type: fallback
-    args:
-      primary: remote_sequence
-      secondary: local_sequence
-      threshold: 500
-      always_standby: true
+############################
+# 3️⃣ 上游 DNS
+############################
 
-  - tag: "main_sequence"
-    type: sequence
-    args:
-      - exec: prefer_ipv4
-      - exec: $hosts
-      - exec: $cache
-      - matches: has_resp
-        exec: accept
-      - matches: "qname $direct_domain"
-        exec: goto local_sequence
-      - exec: $final
+# 🇨🇳 国内 DNS（直连）
+- tag: dns_cn
+  type: forward
+  args:
+    concurrent: 3
+    upstreams:
+      - addr: "223.5.5.5"
+      - addr: "119.29.29.29"
+      - addr: "114.114.114.114"
 
-  # 5. 服务入站 (监听 127.0.0.1:5335，供 daed 调用)
-  - tag: udp_server
-    type: udp_server
-    args:
-      entry: main_sequence
-      listen: "127.0.0.1:5335"
+# 🇨🇳 国内 DNS 备用
+- tag: dns_cn_backup
+  type: forward
+  args:
+    concurrent: 3
+    upstreams:
+       - addr: "tcp://223.6.6.6"
+       - addr: "https://doh.pub/dns-query"
+         dial_addr: "1.12.12.12"
+       - addr: "https://doh.pub/dns-query"
+         dial_addr: "120.53.53.53"
 
-  - tag: tcp_server
-    type: tcp_server
-    args:
-      entry: main_sequence
-      listen: "127.0.0.1:5335"
+# 🌍 国外 DNS（走代理）
+- tag: dns_proxy
+  type: forward
+  args:
+    concurrent: 3
+    upstreams:
+      - addr: "tcp://1.1.1.1"
+      - addr: "tcp://8.8.8.8"
+      - addr: "tcp://9.9.9.9"
+
+# 🌍 国外备用
+- tag: dns_proxy2
+  type: forward
+  args:
+    concurrent: 2
+    upstreams:
+      - addr: "tcp://8.8.4.4"
+      - addr: "tcp://1.0.0.1"
+
+# 🎵 抖音专属 "火山Dns"
+- tag: dns_douyin
+  type: forward
+  args:
+    concurrent: 2
+    upstreams:
+      - addr: "180.184.1.1"
+      - addr: "180.184.2.2" 
+   
+############################
+# 4️⃣ 策略
+############################
+
+# 🍎 Apple
+- tag: apple_strategy
+  type: fallback
+  args:
+    primary: dns_cn
+    secondary: dns_cn_backup
+    threshold: 700
+    always_standby: true
+
+# 🎵 抖音 CDN 专属
+- tag: douyin_strategy
+  type: fallback
+  args:
+    primary: dns_douyin
+    secondary: dns_cn
+    threshold: 200
+    always_standby: true
+
+# 🌍 最终兜底
+- tag: final_strategy
+  type: fallback
+  args:
+    primary: dns_proxy
+    secondary: dns_proxy2
+    threshold: 700
+    always_standby: true
+
+############################
+# 5️⃣ 主逻辑
+############################
+
+- tag: main
+  type: sequence
+  args:
+
+    # 🔥 缓存优先
+    - exec: $cache
+    - matches: has_resp
+      exec: accept
+
+    # 🚫 禁用 IPv6 (AAAA 查询直接阻断，杜绝代理漏网)
+    - matches: qtype 28
+      exec: reject 0
+
+    # 🍎 HTTPS RR 优化 (屏蔽 HTTPS/SVCB 记录，防止浏览器绕过代理)
+    - matches: qtype 12 65
+      exec: reject 3
+
+    # 🧱 广告拦截
+    - matches: qname $reject_domain
+      exec: reject 3
+
+    # 🍎 Apple 域名
+    - matches: qname $apple_domain
+      exec: $apple_strategy
+    - matches: has_resp
+      exec: accept
+
+    # 🎵 字节 CDN（抖音优化）
+    - matches: qname $byte_domain
+      exec: $douyin_strategy
+    - matches: has_resp
+      exec: accept
+      
+    # 🇨🇳 国内域名
+    - matches: qname $cn_domain
+      exec: $dns_cn
+    - matches: resp_ip $cn_ip
+      exec: accept
+
+    # 🌍 国外域名
+    - matches: qname $non_cn_domain
+      exec: $dns_proxy
+    - exec: ttl 300-3600
+    - matches: has_resp
+      exec: accept
+
+    # 🌍 未知域名
+    - exec: $final_strategy
+    - exec: ttl 300-3600
+    - matches: has_resp
+      exec: accept
+
+    # 🛑 防客户端卡死
+    - exec: reject 3
+
+############################
+# 6️⃣ 监听
+############################
+
+- tag: udp
+  type: udp_server
+  args:
+    entry: main
+    listen: 0.0.0.0:53
+
+- tag: tcp
+  type: tcp_server
+  args:
+    entry: main
+    listen: 0.0.0.0:53
 ```
 
 ---
 
-## 5. 启动与管理服务
+## 5. 释放 53 端口与启动服务
+
+由于 MosDNS 配置为监听标准 DNS 端口 `0.0.0.0:53`，请确保系统中没有其它服务占用 53 端口（如 Debian 系统的 `systemd-resolved`）：
 
 ```bash
-# 启动并设置开机自启
+# 若 systemd-resolved 占用了 53 端口，将其停止并禁用
+systemctl stop systemd-resolved 2>/dev/null || true
+systemctl disable systemd-resolved 2>/dev/null || true
+
+# 启动 MosDNS 并设置开机自启
 systemctl enable mosdns --now
 
 # 检查服务状态
 systemctl status mosdns
 
-# 测试本地解析 (查询 5335 端口)
-dig @127.0.0.1 -p 5335 baidu.com
-dig @127.0.0.1 -p 5335 google.com
+# 测试本地解析验证 (直接向本机 53 端口查询)
+dig @127.0.0.1 baidu.com
+dig @127.0.0.1 google.com
 ```
 
 ---
 
 ## 6. 配置规则库每日自动更新
 
-创建 `/etc/mosdns/mos_rule_update.sh`：
+创建自动更新脚本 `/etc/mosdns/mos_rule_update.sh`：
 
 ```bash
 cat > /etc/mosdns/mos_rule_update.sh <<\x27EOF\x27
@@ -241,10 +364,12 @@ download() {
   fi
 }
 
-download "https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/direct-list.txt" "/etc/mosdns/geosite_cn.txt"
-download "https://raw.githubusercontent.com/Hackl0us/GeoIP2-CN/release/CN-ip-cidr.txt" "/etc/mosdns/geoip_cn.txt"
-download "https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/proxy-list.txt" "/etc/mosdns/geosite_geolocation_noncn.txt"
-download "https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/gfw.txt" "/etc/mosdns/gfw.txt"
+# 更新核心分流规则
+download "https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/direct-list.txt" "/etc/mosdns/rules/geosite_cn.txt"
+download "https://raw.githubusercontent.com/Hackl0us/GeoIP2-CN/release/CN-ip-cidr.txt" "/etc/mosdns/rules/geoip_cn.txt"
+download "https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/proxy-list.txt" "/etc/mosdns/rules/geosite_geolocation-!cn.txt"
+download "https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/reject-list.txt" "/etc/mosdns/rules/reject-list.txt"
+download "https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/apple.txt" "/etc/mosdns/rules/geosite_apple.txt"
 
 # 重启 mosdns 使新规则生效
 systemctl restart mosdns

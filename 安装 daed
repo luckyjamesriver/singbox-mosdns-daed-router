@@ -61,12 +61,12 @@ http://10.10.11.7:2023
 ---
 
 ### 3.2 DNS 设置 (DNS)
-将 DNS 查询全面托管给本地的 MosDNS (`:5335`)：
+将 DNS 查询全面托管给本地的 MosDNS (`:53`)：
 
 ```text
 ipversion_prefer: 4
 upstream {
-  mosdns: 'tcp+udp://127.0.0.1:5335'
+  mosdns: 'tcp+udp://127.0.0.1:53'
 }
 routing {
   request {
