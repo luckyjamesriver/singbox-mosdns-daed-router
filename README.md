@@ -33,7 +33,7 @@
 | 步骤 | 说明文档 | 核心内容 |
 | :--- | :--- | :--- |
 | **步骤 1** | [准备网络环境](./准备网络环境) | 配置静态 IP 与固定 DNS、开启内核转发、关闭 ICMP 重定向、持久化 iptables |
-| **步骤 2** | [安装 sing-box](./安装%20sing-box) | APT deb822 安装 Sing-box 1.14+、Socks5 7777 进站、最新多协议出站及 MetaCubeXD |
+| **步骤 2** | [安装 sing-box](./安装%20sing-box) | APT deb822 安装 Sing-box 1.14+、Socks5 7891 进站、最新多协议出站及 MetaCubeXD |
 | **步骤 3** | [安装 mosdns](./安装%20mosdns) | 安装 mosdns v5，配置国内外域名/IP 规则集与本地 DNS 缓存 |
 | **步骤 4** | [安装 daed](./安装%20daed) | 安装 daed、配置 eBPF 透明代理分流规则、关联 Sing-box 节点 |
 
@@ -49,7 +49,7 @@
 [ Debian 12 旁路由 (10.10.11.7) ]
     ├─ daed (eBPF 流量劫持与路由判定)
     ├─ mosdns (:53 国内外精准分流防污染)
-    └─ sing-box (:7777 出站代理核心)
+    └─ sing-box (:7891 出站代理核心)
            │
            │ (国内直连流量 / 代理外网流量出站)
            ▼

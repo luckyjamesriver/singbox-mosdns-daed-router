@@ -55,8 +55,13 @@ journalctl -u sing-box -f -o cat
 ## 3. Sing-box 1.14 核心配置 (`/etc/sing-box/config.json`)
 
 在配合 `daed` 旁路由架构下，Sing-box 作为底层**纯粹的高性能出站代理核心**：
-- **入站**：配置轻量 Socks5 协议（监听 `0.0.0.0:7777`），专供 daed 作为单一上游节点。
-- **出站**：配置主流高性能抗封锁节点（VLESS-Reality、Hysteria 2、TUIC v5），支持手动策略组（selector）与自动优选延迟组（urltest）。
+- **入站**：配置轻量 Socks5 协议（监听 `0.0.0.0:7891`），专供 daed 作为单一上游节点。
+- **出站**：配置主流高性能抗封锁节点，支持多协议并发加速与多线路冗余：
+  - **VLESS-Reality-Brutal**：集成 TCP Brutal 高性能多路复用加速。
+  - **VLESS-Reality-gRPC**：高抗封锁 gRPC 传输隧道。
+  - **Hysteria 2**：基于 QUIC 协议的高速抗弱网加速，搭载 Salamander 端口与流量混淆。
+  - **TUIC v5**：基于 QUIC 的原生轻量代理，采用 BBR 拥塞控制。
+  - **策略分流**：包含手动策略选择组（selector）与自动延迟优选组（urltest）。
 - **可视化面板**：集成最新版 **MetaCubeXD (Metacubexd)** Web 仪表板，通过 `http://10.10.11.7:9090` 随时直观测速与切换节点。
 - **DNS**：完全不需要在 Sing-box 中配置复杂的 DNS 分流，DNS 解析全权由上层 daed / mosdns 处理。
 
@@ -66,7 +71,7 @@ journalctl -u sing-box -f -o cat
 nano /etc/sing-box/config.json
 ```
 
-写入以下标准 1.14 规范配置：
+写入以下标准 1.14 规范配置（**请根据实际情况替换包含 `*` 的服务器地址、端口、UUID及密码密钥等敏感信息**）：
 
 ```json
 {
@@ -79,8 +84,6 @@ nano /etc/sing-box/config.json
     "clash_api": {
       "external_controller": "0.0.0.0:9090",
       "external_ui": "metacubexd",
-      "external_ui_download_url": "https://github.com/MetaCubeX/metacubexd/archive/refs/heads/gh-pages.zip",
-      "external_ui_download_detour": "select",
       "default_mode": "rule"
     },
     "cache_file": {
@@ -92,9 +95,7 @@ nano /etc/sing-box/config.json
       "type": "socks",
       "tag": "socks-in",
       "listen": "0.0.0.0",
-      "listen_port": 7777,
-      "tcp_fast_open": false,
-      "udp_fragment": true
+      "listen_port": 7891
     }
   ],
   "outbounds": [
@@ -102,19 +103,20 @@ nano /etc/sing-box/config.json
       "type": "selector",
       "tag": "select",
       "outbounds": [
-        "auto",
-        "VLESS-Reality",
+        "VLESS-Reality-Brutal",
+        "VLESS-Reality-gRPC",
         "Hysteria2",
         "TUIC-v5",
-        "direct"
+        "auto"
       ],
-      "default": "auto"
+      "default": "VLESS-Reality-Brutal"
     },
     {
       "type": "urltest",
       "tag": "auto",
       "outbounds": [
-        "VLESS-Reality",
+        "VLESS-Reality-Brutal",
+        "VLESS-Reality-gRPC",
         "Hysteria2",
         "TUIC-v5"
       ],
@@ -124,11 +126,10 @@ nano /etc/sing-box/config.json
     },
     {
       "type": "vless",
-      "tag": "VLESS-Reality",
-      "server": "你的VPS_IP或域名",
-      "server_port": 443,
-      "uuid": "你的UUID",
-      "flow": "xtls-rprx-vision",
+      "tag": "VLESS-Reality-Brutal",
+      "server": "***.***.***.***",
+      "server_port": 40882,
+      "uuid": "********-****-****-****-************",
       "tls": {
         "enabled": true,
         "server_name": "www.apple.com",
@@ -138,41 +139,81 @@ nano /etc/sing-box/config.json
         },
         "reality": {
           "enabled": true,
-          "public_key": "你的Reality公钥",
-          "short_id": "你的short_id"
+          "public_key": "*******************************************",
+          "short_id": "****************"
         }
       },
-      "packet_encoding": "xudp"
+      "packet_encoding": "xudp",
+      "multiplex": {
+        "enabled": true,
+        "protocol": "h2mux",
+        "max_connections": 1,
+        "min_streams": 4,
+        "padding": false,
+        "brutal": {
+          "enabled": true,
+          "up_mbps": 500,
+          "down_mbps": 50
+        }
+      }
+    },
+    {
+      "type": "vless",
+      "tag": "VLESS-Reality-gRPC",
+      "server": "***.***.***.***",
+      "server_port": 34086,
+      "uuid": "********-****-****-****-************",
+      "network": "tcp",
+      "tls": {
+        "enabled": true,
+        "server_name": "www.apple.com",
+        "utls": {
+          "enabled": true,
+          "fingerprint": "chrome"
+        },
+        "reality": {
+          "enabled": true,
+          "public_key": "*******************************************",
+          "short_id": "****************"
+        }
+      },
+      "transport": {
+        "type": "grpc",
+        "service_name": "grpc-service"
+      }
     },
     {
       "type": "hysteria2",
       "tag": "Hysteria2",
-      "server": "你的VPS_IP或域名",
-      "server_port": 443,
-      "up_mbps": 50,
-      "down_mbps": 300,
-      "password": "你的Hy2密码",
+      "server": "***.***.***.***",
+      "server_port": 21943,
+      "up_mbps": 500,
+      "down_mbps": 50,
+      "password": "********************************",
       "obfs": {
         "type": "salamander",
-        "password": "你的混淆密码"
+        "password": "****************"
       },
       "tls": {
         "enabled": true,
-        "server_name": "你的证书域名",
+        "server_name": "****.yourdomain.com",
+        "alpn": [
+          "h3"
+        ],
         "insecure": true
       }
     },
     {
       "type": "tuic",
       "tag": "TUIC-v5",
-      "server": "你的VPS_IP或域名",
-      "server_port": 443,
-      "uuid": "你的UUID",
-      "password": "你的TUIC密码",
+      "server": "***.***.***.***",
+      "server_port": 21483,
+      "uuid": "********-****-****-****-************",
+      "password": "********************************",
       "congestion_control": "bbr",
       "tls": {
         "enabled": true,
-        "server_name": "你的证书域名",
+        "server_name": "****.yourdomain.com",
         "alpn": [
           "h3"
         ],
@@ -182,10 +223,28 @@ nano /etc/sing-box/config.json
     {
       "type": "direct",
       "tag": "direct"
+    },
+    {
+      "type": "block",
+      "tag": "block"
     }
   ],
   "route": {
-    "final": "select",
+    "default_domain_resolver": "dns-remote",
+    "rules": [
+      {
+        "ip_is_private": true,
+        "outbound": "direct"
+      },
+      {
+        "clash_mode": "Global",
+        "outbound": "select"
+      },
+      {
+        "clash_mode": "Direct",
+        "outbound": "direct"
+      }
+    ],
     "auto_detect_interface": true
   }
 }
