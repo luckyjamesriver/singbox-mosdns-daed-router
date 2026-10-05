@@ -18,7 +18,7 @@
    - **核心联动**：DHCP 下发网关与 DNS 全权指向 Keepalived VIP (`10.10.11.10`)，主路由与旁路由职责清晰分离。
 3. **Debian 12 + daed (eBPF) + Sing-box 1.14+ 极速旁路由**：
    - 采用 Linux 内核级 **eBPF** 技术在链路层截流分流，免去繁琐的 iptables，CPU 负载极低；
-   - Sing-box 1.14+ 官方 deb822 源规范管理，搭载 VLESS-Reality-Brutal (TCP Brutal 500/50)、VLESS-Reality-gRPC、Hysteria 2、TUIC v5 四重高速出站协议；
+   - Sing-box 1.14+ 官方 deb822 源规范管理，搭载 VLESS-Reality-Brutal (TCP Brutal 下行 500M / 上行 50M 满血加速)、VLESS-Reality-gRPC、Hysteria 2、TUIC v5 四重高速出站协议；
    - 集成 MetaCubeXD Web 仪表板 (`:9090`) 实时测速与节点优选。
 4. **MosDNS v5 国内外智能防污染分流**：
    - 本地轻量监听 `:53`，精准分流国内白名单直连与海外 AI/常用域名代理，搭配大容量内存缓存；
