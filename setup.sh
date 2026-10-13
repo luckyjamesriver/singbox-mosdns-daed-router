@@ -446,208 +446,132 @@ EOF
     chmod +x /etc/mosdns/mos_rule_update.sh
     (crontab -l 2>/dev/null | grep -v 'mos_rule_update.sh' ; echo "0 4 * * * /etc/mosdns/mos_rule_update.sh >/dev/null 2>&1") | crontab -
 
-    # 配置 MosDNS 核心平滑升级脚本 (/usr/local/bin/update_mosdns.sh)
-    info "配置 MosDNS 核心平滑升级脚本 (/usr/local/bin/update_mosdns.sh)..."
+    # 配置 MosDNS 核心平滑升级脚本 (/usr/local/bin/update_mosdns.sh 与 /usr/local/bin/update-mosdns)
+    info "配置 MosDNS 核心平滑升级脚本 (/usr/local/bin/update-mosdns)..."
     cat > /usr/local/bin/update_mosdns.sh << 'EOF'
 #!/usr/bin/env bash
 # ==============================================================================
-# Script: update_mosdns.sh
-# Description: MosDNS 核心全自动安全平滑升级脚本 (自动匹配架构、多源容灾、备份与回滚)
+# Script: update-mosdns (update_mosdns.sh)
+# Description: MosDNS 核心全自动从 GitHub Releases 获取最新二进制并安全平滑升级
 # Project: singbox-mosdns-daed-router
 # ==============================================================================
 
 set -eo pipefail
 
-RED="\033[31m"
-GREEN="\033[32m"
-YELLOW="\033[33m"
-CYAN="\033[36m"
-PLAIN="\033[0m"
+echo "🔍 正在检查 MosDNS 最新版本..."
 
-log_info()  { echo -e "${GREEN}[INFO]${PLAIN} $*"; }
-log_warn()  { echo -e "${YELLOW}[WARN]${PLAIN} $*"; }
-log_error() { echo -e "${RED}[ERROR]${PLAIN} $*" >&2; }
-log_step()  { echo -e "${CYAN}[STEP]${PLAIN} $*"; }
+# 1. 通过 GitHub 网页 302 重定向获取真实最新 Tag（无需 API，不限流，稳定可靠）
+LATEST_URL=$(curl -sIL -o /dev/null -w '%{url_effective}' --connect-timeout 10 https://github.com/IrineSistiana/mosdns/releases/latest 2>/dev/null || true)
+if [[ -z "$LATEST_URL" || "$LATEST_URL" == *"releases/latest"* ]]; then
+    LATEST_URL=$(curl -sIL -x socks5h://127.0.0.1:7891 -o /dev/null -w '%{url_effective}' --connect-timeout 10 https://github.com/IrineSistiana/mosdns/releases/latest 2>/dev/null || true)
+fi
 
-BIN_FILE="/usr/local/bin/mosdns"
-CONFIG_FILE="/etc/mosdns/config.yaml"
-BACKUP_DIR="/var/backups/mosdns"
-TMP_DIR="/tmp/mosdns_update"
-LOG_FILE="/var/log/mosdns_update.log"
+LATEST_TAG=$(basename "${LATEST_URL}")
 
-FORCE=false
-CHECK_ONLY=false
-
-usage() {
-    echo "用法: sudo $0 [选项]"
-    echo "选项:"
-    echo "  -c, --check    仅检查是否有新版本，不执行升级"
-    echo "  -f, --force    即使已是最新版本也强制重新下载更新并验证"
-    echo "  -h, --help     显示帮助信息"
-    exit 0
-}
-
-while [[ $# -gt 0 ]]; do
-    case "$1" in
-        -c|--check) CHECK_ONLY=true; shift ;;
-        -f|--force) FORCE=true; shift ;;
-        -h|--help) usage ;;
-        *) log_error "未知参数: $1"; usage ;;
-    esac
-done
-
-if [[ $EUID -ne 0 ]]; then
-    log_error "此脚本必须以 root 权限运行！请执行: sudo $0"
+if [[ ! "$LATEST_TAG" =~ ^v[0-9] ]]; then
+    echo "❌ 获取最新版本失败（获取到: ${LATEST_TAG}），请检查网络连接。"
     exit 1
 fi
 
-mkdir -p "$(dirname "$LOG_FILE")"
-exec > >(tee -a "$LOG_FILE") 2>&1
+VERSION=${LATEST_TAG#v}
 
-log_step "=== [$(date '+%Y-%m-%d %H:%M:%S')] 开始检查 MosDNS 核心版本 ==="
+# 2. 检查当前已安装版本
+CURRENT_VER=$(mosdns version 2>/dev/null | awk '{print $2}' || mosdns version 2>/dev/null | head -n 1 || echo "未安装")
+echo "📌 当前已安装版本: ${CURRENT_VER}"
+echo "🚀 官方最新发布版本: ${LATEST_TAG}"
 
-# 1. 架构识别
+if [[ "$CURRENT_VER" == "$VERSION" || "$CURRENT_VER" == "$LATEST_TAG" ]]; then
+    if [[ "$1" != "-f" && "$1" != "--force" ]]; then
+        echo "✨ 当前 MosDNS 已是最新版本 (${CURRENT_VER})，无需重复更新。(强制重新下载请加参数: -f)"
+        exit 0
+    fi
+fi
+
+# 3. 判断系统架构
 ARCH=$(uname -m)
-case "${ARCH}" in
-    x86_64|amd64)   MOSDNS_ARCH="amd64" ;;
-    aarch64|arm64)  MOSDNS_ARCH="arm64" ;;
-    *) log_error "暂不支持的 CPU 架构: ${ARCH}"; exit 1 ;;
+case $ARCH in
+    x86_64|amd64)   MOS_ARCH="amd64" ;;
+    aarch64|arm64)  MOS_ARCH="arm64" ;;
+    *) echo "❌ 未知架构: $ARCH"; exit 1 ;;
 esac
 
-# 2. 获取当前已安装版本
-CURRENT_VER="未安装"
-if [[ -f "$BIN_FILE" ]]; then
-    CURRENT_VER=$("$BIN_FILE" version 2>/dev/null | awk '{print $2}' || "$BIN_FILE" version 2>/dev/null | head -n 1)
-    [[ -z "$CURRENT_VER" ]] && CURRENT_VER="未知"
-fi
-log_info "当前已安装版本: ${CYAN}${CURRENT_VER}${PLAIN}"
+ZIP_NAME="mosdns-linux-${MOS_ARCH}.zip"
+RAW_URL="https://github.com/IrineSistiana/mosdns/releases/download/${LATEST_TAG}/${ZIP_NAME}"
+PROXY_URL="https://gh-proxy.com/${RAW_URL}"
+FALLBACK_URL="https://ghfast.top/${RAW_URL}"
 
-# 3. 通过 GitHub API 获取最新 Release 版本号
-log_step "正在从 GitHub 获取 MosDNS 最新发布版本..."
-API_URL="https://api.github.com/repos/IrineSistiana/mosdns/releases/latest"
+echo "📦 准备下载软件包: ${ZIP_NAME} ..."
 
-fetch_latest_tag() {
-    local res=""
-    res=$(curl -fsSL -x socks5h://127.0.0.1:7891 --connect-timeout 5 --max-time 15 "$API_URL" 2>/dev/null || true)
-    if [[ -z "$res" ]]; then
-        res=$(curl -fsSL --connect-timeout 5 --max-time 15 "$API_URL" 2>/dev/null || true)
-    fi
-    if [[ -z "$res" ]]; then
-        res=$(curl -fsSL --connect-timeout 5 --max-time 15 "https://ghfast.top/$API_URL" 2>/dev/null || true)
-    fi
-    echo "$res" | grep -m 1 '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/'
-}
+TMP_DIR=$(mktemp -d)
 
-LATEST_TAG=$(fetch_latest_tag)
-if [[ -z "$LATEST_TAG" ]]; then
-    log_error "获取 GitHub 最新版本失败，请检查网络或 GitHub 连通性！"
-    exit 1
-fi
-log_info "GitHub 最新稳定版本: ${CYAN}${LATEST_TAG}${PLAIN}"
-
-if [[ "$CHECK_ONLY" == true ]]; then
-    if [[ "$CURRENT_VER" == "$LATEST_TAG" || "$CURRENT_VER" == "${LATEST_TAG#v}" ]]; then
-        log_info "当前已是最新版本，无需升级。"
-    else
-        log_warn "检测到新版本可用: ${CURRENT_VER} -> ${LATEST_TAG}"
-    fi
-    exit 0
-fi
-
-if [[ ("$CURRENT_VER" == "$LATEST_TAG" || "$CURRENT_VER" == "${LATEST_TAG#v}") && "$FORCE" != true ]]; then
-    log_info "当前 MosDNS 已是最新版本 (${CURRENT_VER})，无需重复升级。"
-    exit 0
-fi
-
-# 4. 构造下载链接 (多源容灾)
-ZIP_NAME="mosdns-linux-${MOSDNS_ARCH}.zip"
-RELEASE_URL="https://github.com/IrineSistiana/mosdns/releases/download/${LATEST_TAG}/${ZIP_NAME}"
-MIRROR_URL="https://ghfast.top/${RELEASE_URL}"
-
-rm -rf "$TMP_DIR"
-mkdir -p "$TMP_DIR"
-
-log_step "正在下载 MosDNS 核心软件包 (${ZIP_NAME})..."
+# 4. 多通道容灾下载（优先加速镜像，其次本地代理，最后直连）
 download_success=false
-
-if curl -fsSL -x socks5h://127.0.0.1:7891 "$RELEASE_URL" -o "$TMP_DIR/$ZIP_NAME" --connect-timeout 10 --max-time 60 2>/dev/null; then
-    log_info "通过本地代理通道下载成功。"
+if curl -f -L --connect-timeout 15 -o "${TMP_DIR}/${ZIP_NAME}" "${PROXY_URL}" 2>/dev/null; then
+    echo "✅ 通过 gh-proxy 镜像站下载成功。"
     download_success=true
-elif curl -fsSL "$MIRROR_URL" -o "$TMP_DIR/$ZIP_NAME" --connect-timeout 10 --max-time 60 2>/dev/null; then
-    log_info "通过加速镜像通道下载成功。"
+elif curl -f -L -x socks5h://127.0.0.1:7891 --connect-timeout 15 -o "${TMP_DIR}/${ZIP_NAME}" "${RAW_URL}" 2>/dev/null; then
+    echo "✅ 通过本地代理通道下载成功。"
     download_success=true
-elif curl -fsSL "$RELEASE_URL" -o "$TMP_DIR/$ZIP_NAME" --connect-timeout 10 --max-time 60 2>/dev/null; then
-    log_info "直连通道下载成功。"
+elif curl -f -L --connect-timeout 15 -o "${TMP_DIR}/${ZIP_NAME}" "${FALLBACK_URL}" 2>/dev/null; then
+    echo "✅ 通过 ghfast 镜像站下载成功。"
+    download_success=true
+elif curl -f -L --connect-timeout 15 -o "${TMP_DIR}/${ZIP_NAME}" "${RAW_URL}" 2>/dev/null; then
+    echo "✅ 通过直连 GitHub 下载成功。"
     download_success=true
 fi
 
-if [[ "$download_success" != true || ! -s "$TMP_DIR/$ZIP_NAME" ]]; then
-    log_error "下载 MosDNS 核心二进制失败，请检查网络！"
-    rm -rf "$TMP_DIR"
+if [[ "$download_success" != true || ! -s "${TMP_DIR}/${ZIP_NAME}" ]]; then
+    echo "❌ 下载 MosDNS 失败，请检查网络连接！"
+    rm -rf "${TMP_DIR}"
     exit 1
 fi
 
-# 5. 解压并验证可执行性
-log_step "解压并验证软件包完整性..."
-unzip -q -o "$TMP_DIR/$ZIP_NAME" -d "$TMP_DIR/extracted"
-NEW_BIN="$TMP_DIR/extracted/mosdns"
+echo "📦 正在解压并更新二进制文件..."
+unzip -q -o "${TMP_DIR}/${ZIP_NAME}" -d "${TMP_DIR}/extracted"
 
+NEW_BIN="${TMP_DIR}/extracted/mosdns"
 if [[ ! -f "$NEW_BIN" ]]; then
-    log_error "解压后未找到有效 mosdns 二进制文件！"
-    rm -rf "$TMP_DIR"
+    echo "❌ 解压后未找到有效 mosdns 二进制文件！"
+    rm -rf "${TMP_DIR}"
     exit 1
 fi
-
 chmod +x "$NEW_BIN"
 
 if ! "$NEW_BIN" version >/dev/null 2>&1; then
-    log_error "新版本 mosdns 二进制在当前系统无法正常执行！已中止升级。"
-    rm -rf "$TMP_DIR"
+    echo "❌ 新版 mosdns 在当前系统无法正常执行！已终止替换。"
+    rm -rf "${TMP_DIR}"
     exit 1
 fi
 
-# 6. 备份现有版本
-mkdir -p "$BACKUP_DIR"
-TIMESTAMP=$(date '+%Y%m%d_%H%M%S')
-if [[ -f "$BIN_FILE" ]]; then
-    cp -pf "$BIN_FILE" "$BACKUP_DIR/mosdns_${CURRENT_VER}_${TIMESTAMP}"
-    cp -pf "$BIN_FILE" "$BACKUP_DIR/mosdns.bak"
-    log_info "已备份旧版二进制文件至: $BACKUP_DIR/mosdns.bak"
+if [[ -f /usr/local/bin/mosdns ]]; then
+    cp -pf /usr/local/bin/mosdns /usr/local/bin/mosdns.bak 2>/dev/null || true
 fi
 
-# 7. 部署新二进制
-log_step "替换并安装新版本二进制至 $BIN_FILE ..."
-cp -pf "$NEW_BIN" "$BIN_FILE"
-chmod +x "$BIN_FILE"
-rm -rf "$TMP_DIR"
+systemctl stop mosdns 2>/dev/null || true
+cp -f "$NEW_BIN" /usr/local/bin/mosdns
+chmod +x /usr/local/bin/mosdns
+rm -rf "${TMP_DIR}"
 
-NEW_VER=$("$BIN_FILE" version 2>/dev/null | awk '{print $2}' || "$BIN_FILE" version 2>/dev/null | head -n 1)
-
-# 8. 重启并验证服务状态
-log_step "重启 MosDNS 服务并检验运行状态..."
-systemctl daemon-reload
 systemctl restart mosdns
-
 sleep 1
+
 if systemctl is-active --quiet mosdns; then
-    log_info "🎉 MosDNS 服务重启成功，状态: active (running)"
-    echo -e "${GREEN}====================================================${PLAIN}"
-    echo -e "${GREEN}  MosDNS 成功平滑升级至: ${NEW_VER}${PLAIN}"
-    echo -e "${GREEN}====================================================${PLAIN}"
+    echo "🎉 MosDNS 已成功更新至 ${LATEST_TAG} 并重启服务！"
+    /usr/local/bin/mosdns version
 else
-    log_error "服务重启失败，正在执行自动回滚..."
-    journalctl -u mosdns -n 20 --no-pager
-    if [[ -f "$BACKUP_DIR/mosdns.bak" ]]; then
-        cp -pf "$BACKUP_DIR/mosdns.bak" "$BIN_FILE"
+    echo "❌ 服务启动失败，正在回滚旧版程序..."
+    if [[ -f /usr/local/bin/mosdns.bak ]]; then
+        cp -pf /usr/local/bin/mosdns.bak /usr/local/bin/mosdns
         systemctl restart mosdns
-        log_warn "已回滚至旧版本 (${CURRENT_VER})。"
+        echo "⚠️ 已回滚至旧版本。"
     fi
     exit 1
 fi
 EOF
     chmod +x /usr/local/bin/update_mosdns.sh
+    ln -sf /usr/local/bin/update_mosdns.sh /usr/local/bin/update-mosdns
 
-    success "MosDNS 服务与升级脚本 (/usr/local/bin/update_mosdns.sh) 已就绪！"
+    success "MosDNS 服务与升级脚本 (/usr/local/bin/update-mosdns) 已就绪！"
 }
 
 # --- 4. 部署 Sing-box 1.14+ 与 MetaCubeXD 面板 ---
@@ -706,167 +630,141 @@ EOF
     # 配置每日凌晨 03:00 自动更新
     (crontab -l 2>/dev/null | grep -v 'update_metacubexd.sh' ; echo "0 3 * * * /usr/local/bin/update_metacubexd.sh >/dev/null 2>&1") | crontab -
 
-    # 配置 Sing-box 核心平滑升级脚本 (/usr/local/bin/update_singbox.sh)
-    info "配置 Sing-box 核心平滑升级脚本 (/usr/local/bin/update_singbox.sh)..."
+    # 配置 Sing-box 核心平滑升级脚本 (/usr/local/bin/update_singbox.sh 与 /usr/local/bin/update-sing-box)
+    info "配置 Sing-box 核心平滑升级脚本 (/usr/local/bin/update-sing-box)..."
     cat > /usr/local/bin/update_singbox.sh << 'EOF'
 #!/usr/bin/env bash
 # ==============================================================================
-# Script: update_singbox.sh
-# Description: Sing-box 核心全自动安全平滑升级脚本 (带预检、备份、语法校验与自动回滚)
+# Script: update-sing-box (update_singbox.sh)
+# Description: sing-box 核心全自动从 GitHub Releases 获取最新二进制并安全平滑升级
 # Project: singbox-mosdns-daed-router
 # ==============================================================================
 
 set -eo pipefail
 
-RED="\033[31m"
-GREEN="\033[32m"
-YELLOW="\033[33m"
-CYAN="\033[36m"
-PLAIN="\033[0m"
+echo "🔍 正在检查 sing-box 最新版本..."
 
-log_info()  { echo -e "${GREEN}[INFO]${PLAIN} $*"; }
-log_warn()  { echo -e "${YELLOW}[WARN]${PLAIN} $*"; }
-log_error() { echo -e "${RED}[ERROR]${PLAIN} $*" >&2; }
-log_step()  { echo -e "${CYAN}[STEP]${PLAIN} $*"; }
+# 1. 通过 GitHub 网页 302 重定向获取真实最新 Tag（无需 API，不限流，稳定可靠）
+LATEST_URL=$(curl -sIL -o /dev/null -w '%{url_effective}' --connect-timeout 10 https://github.com/SagerNet/sing-box/releases/latest 2>/dev/null || true)
+if [[ -z "$LATEST_URL" || "$LATEST_URL" == *"releases/latest"* ]]; then
+    LATEST_URL=$(curl -sIL -x socks5h://127.0.0.1:7891 -o /dev/null -w '%{url_effective}' --connect-timeout 10 https://github.com/SagerNet/sing-box/releases/latest 2>/dev/null || true)
+fi
+
+LATEST_TAG=$(basename "${LATEST_URL}")
+
+if [[ ! "$LATEST_TAG" =~ ^v[0-9] ]]; then
+    echo "❌ 获取最新版本失败（获取到: ${LATEST_TAG}），请检查网络连接。"
+    exit 1
+fi
+
+VERSION=${LATEST_TAG#v}
+
+# 2. 检查当前已安装版本
+CURRENT_VER=$(sing-box version 2>/dev/null | head -n 1 | awk '{print $3}' || echo "未安装")
+echo "📌 当前已安装版本: ${CURRENT_VER}"
+echo "🚀 官方最新发布版本: ${LATEST_TAG}"
+
+if [[ "$CURRENT_VER" == "$VERSION" || "$CURRENT_VER" == "$LATEST_TAG" ]]; then
+    if [[ "$1" != "-f" && "$1" != "--force" ]]; then
+        echo "✨ 当前 sing-box 已是最新版本 (${CURRENT_VER})，无需重复更新。(强制重新下载请加参数: -f)"
+        exit 0
+    fi
+fi
+
+# 3. 判断系统架构
+ARCH=$(uname -m)
+case $ARCH in
+    x86_64|amd64)   SB_ARCH="amd64" ;;
+    aarch64|arm64)  SB_ARCH="arm64" ;;
+    armv7l)         SB_ARCH="armv7" ;;
+    *) echo "❌ 未知架构: $ARCH"; exit 1 ;;
+esac
+
+RAW_URL="https://github.com/SagerNet/sing-box/releases/download/${LATEST_TAG}/sing-box-${VERSION}-linux-${SB_ARCH}.tar.gz"
+PROXY_URL="https://gh-proxy.com/${RAW_URL}"
+FALLBACK_URL="https://ghfast.top/${RAW_URL}"
+
+echo "📦 准备下载软件包: sing-box-${VERSION}-linux-${SB_ARCH}.tar.gz ..."
+
+TMP_DIR=$(mktemp -d)
+
+# 4. 多通道容灾下载（优先加速镜像，其次本地代理，最后直连）
+download_success=false
+if curl -f -L --connect-timeout 15 -o "${TMP_DIR}/sing-box.tar.gz" "${PROXY_URL}" 2>/dev/null; then
+    echo "✅ 通过 gh-proxy 镜像站下载成功。"
+    download_success=true
+elif curl -f -L -x socks5h://127.0.0.1:7891 --connect-timeout 15 -o "${TMP_DIR}/sing-box.tar.gz" "${RAW_URL}" 2>/dev/null; then
+    echo "✅ 通过本地代理通道下载成功。"
+    download_success=true
+elif curl -f -L --connect-timeout 15 -o "${TMP_DIR}/sing-box.tar.gz" "${FALLBACK_URL}" 2>/dev/null; then
+    echo "✅ 通过 ghfast 镜像站下载成功。"
+    download_success=true
+elif curl -f -L --connect-timeout 15 -o "${TMP_DIR}/sing-box.tar.gz" "${RAW_URL}" 2>/dev/null; then
+    echo "✅ 通过直连 GitHub 下载成功。"
+    download_success=true
+fi
+
+if [[ "$download_success" != true || ! -s "${TMP_DIR}/sing-box.tar.gz" ]]; then
+    echo "❌ 下载 sing-box 失败，请检查网络连接！"
+    rm -rf "${TMP_DIR}"
+    exit 1
+fi
+
+echo "📦 正在解压并更新二进制文件..."
+tar -xzf "${TMP_DIR}/sing-box.tar.gz" -C "${TMP_DIR}"
+
+NEW_BIN=$(find "${TMP_DIR}" -type f -name "sing-box" | head -n 1)
+if [[ -z "$NEW_BIN" || ! -f "$NEW_BIN" ]]; then
+    echo "❌ 解压后未找到有效 sing-box 二进制文件！"
+    rm -rf "${TMP_DIR}"
+    exit 1
+fi
+chmod +x "$NEW_BIN"
 
 CONFIG_FILE="/etc/sing-box/config.json"
-BIN_FILE="/usr/bin/sing-box"
-BACKUP_DIR="/var/backups/sing-box"
-LOG_FILE="/var/log/singbox_update.log"
-
-FORCE=false
-CHECK_ONLY=false
-
-usage() {
-    echo "用法: sudo $0 [选项]"
-    echo "选项:"
-    echo "  -c, --check    仅检查是否有新版本，不执行升级"
-    echo "  -f, --force    即使已是最新版本也强制重新更新并验证"
-    echo "  -h, --help     显示帮助信息"
-    exit 0
-}
-
-while [[ $# -gt 0 ]]; do
-    case "$1" in
-        -c|--check) CHECK_ONLY=true; shift ;;
-        -f|--force) FORCE=true; shift ;;
-        -h|--help) usage ;;
-        *) log_error "未知参数: $1"; usage ;;
-    esac
-done
-
-if [[ $EUID -ne 0 ]]; then
-    log_error "此脚本必须以 root 权限运行！请执行: sudo $0"
-    exit 1
-fi
-
-mkdir -p "$(dirname "$LOG_FILE")"
-exec > >(tee -a "$LOG_FILE") 2>&1
-
-log_step "=== [$(date '+%Y-%m-%d %H:%M:%S')] 开始检查 Sing-box 核心版本 ==="
-
-# 1. 获取当前版本
-CURRENT_VER="未安装"
-if command -v sing-box >/dev/null 2>&1; then
-    CURRENT_VER=$(sing-box version 2>/dev/null | head -n 1 | awk '{print $3}')
-fi
-log_info "当前已安装版本: ${CYAN}${CURRENT_VER}${PLAIN}"
-
-# 2. 刷新 APT 软件源缓存
-log_step "正在刷新 SagerNet 官方 APT 软件源索引..."
-if ! apt-get update -o Dir::Etc::sourcelist="sources.list.d/sagernet.sources" -o Dir::Etc::sourceparts="-" >/dev/null 2>&1; then
-    apt-get update -y >/dev/null 2>&1 || true
-fi
-
-# 3. 获取 APT 可用候选版本
-CANDIDATE_VER=$(apt-cache policy sing-box 2>/dev/null | grep 'Candidate:' | awk '{print $2}')
-if [[ -z "$CANDIDATE_VER" || "$CANDIDATE_VER" == "(none)" ]]; then
-    log_error "无法从 APT 源中获取 sing-box 候选版本，请检查 /etc/apt/sources.list.d/sagernet.sources 配置！"
-    exit 1
-fi
-log_info "官方软件源最新版本: ${CYAN}${CANDIDATE_VER}${PLAIN}"
-
-if [[ "$CHECK_ONLY" == true ]]; then
-    if [[ "$CURRENT_VER" == "$CANDIDATE_VER" ]]; then
-        log_info "当前已是最新版本，无需升级。"
-    else
-        log_warn "检测到新版本可用: ${CURRENT_VER} -> ${CANDIDATE_VER}"
-    fi
-    exit 0
-fi
-
-if [[ "$CURRENT_VER" == "$CANDIDATE_VER" && "$FORCE" != true ]]; then
-    log_info "当前 Sing-box 已是最新版本 (${CURRENT_VER})，无需重复升级。"
-    exit 0
-fi
-
-# 4. 升级前安全预检：验证现有配置文件合法性
 if [[ -f "$CONFIG_FILE" ]]; then
-    log_step "执行升级前预检：校验当前配置语法合法性..."
-    if ! sing-box check -c "$CONFIG_FILE"; then
-        log_error "当前配置文件存在语法错误，已中止升级，防止升级后服务故障！"
+    echo "🔍 正在使用新版核心预检配置文件语法..."
+    if ! "$NEW_BIN" check -c "$CONFIG_FILE"; then
+        echo "❌ 新版本核心对当前配置文件校验失败！已终止替换，保持现有服务正常运行。"
+        rm -rf "${TMP_DIR}"
         exit 1
     fi
-    log_info "配置文件预检通过。"
+    echo "✅ 配置文件校验通过。"
 fi
 
-# 5. 备份旧版本二进制与配置
-mkdir -p "$BACKUP_DIR"
-TIMESTAMP=$(date '+%Y%m%d_%H%M%S')
-if [[ -f "$BIN_FILE" ]]; then
-    cp -pf "$BIN_FILE" "$BACKUP_DIR/sing-box_${CURRENT_VER}_${TIMESTAMP}"
-    cp -pf "$BIN_FILE" "$BACKUP_DIR/sing-box.bak"
-    log_info "已备份旧版二进制文件至: $BACKUP_DIR/sing-box.bak"
-fi
-if [[ -f "$CONFIG_FILE" ]]; then
-    cp -pf "$CONFIG_FILE" "$BACKUP_DIR/config_${TIMESTAMP}.json"
+if [[ -f /usr/local/bin/sing-box ]]; then
+    cp -pf /usr/local/bin/sing-box /usr/local/bin/sing-box.bak 2>/dev/null || true
 fi
 
-# 6. 执行 APT 升级
-log_step "正在执行 APT 升级安装 sing-box..."
-apt-get install --only-upgrade -y sing-box
+systemctl stop sing-box 2>/dev/null || true
+cp -f "$NEW_BIN" /usr/local/bin/sing-box
+chmod +x /usr/local/bin/sing-box
 
-NEW_VER=$(sing-box version 2>/dev/null | head -n 1 | awk '{print $3}')
-log_info "二进制升级完成，当前版本: ${CYAN}${NEW_VER}${PLAIN}"
-
-# 7. 升级后配置兼容性校验与故障自动回滚
-if [[ -f "$CONFIG_FILE" ]]; then
-    log_step "执行升级后兼容性校验..."
-    if ! sing-box check -c "$CONFIG_FILE"; then
-        log_error "⚠️ 新版本 sing-box 对当前配置文件校验失败！触发自动回滚..."
-        if [[ -f "$BACKUP_DIR/sing-box.bak" ]]; then
-            cp -pf "$BACKUP_DIR/sing-box.bak" "$BIN_FILE"
-            log_warn "已恢复至旧版二进制文件 (${CURRENT_VER})。"
-        fi
-        systemctl restart sing-box || true
-        exit 1
-    fi
-    log_info "新版本与当前配置文件完全兼容！"
+if [[ -f /usr/bin/sing-box || -L /usr/bin/sing-box ]]; then
+    cp -pf /usr/local/bin/sing-box /usr/bin/sing-box
 fi
 
-# 8. 重启并验证 Systemd 服务
-log_step "重启 sing-box 服务并检验运行状态..."
-systemctl daemon-reload
+rm -rf "${TMP_DIR}"
+
 systemctl restart sing-box
-
 sleep 1
+
 if systemctl is-active --quiet sing-box; then
-    log_info "🎉 Sing-box 服务重启成功，状态: active (running)"
-    echo -e "${GREEN}====================================================${PLAIN}"
-    echo -e "${GREEN}  Sing-box 成功平滑升级至: ${NEW_VER}${PLAIN}"
-    echo -e "${GREEN}====================================================${PLAIN}"
+    echo "🎉 sing-box 已成功更新至 ${LATEST_TAG} 并重启服务！"
+    /usr/local/bin/sing-box version
 else
-    log_error "服务启动失败，查看故障日志:"
-    journalctl -u sing-box -n 20 --no-pager
-    if [[ -f "$BACKUP_DIR/sing-box.bak" ]]; then
-        log_warn "正在自动回滚旧版本..."
-        cp -pf "$BACKUP_DIR/sing-box.bak" "$BIN_FILE"
+    echo "❌ 服务启动失败，正在回滚旧版程序..."
+    if [[ -f /usr/local/bin/sing-box.bak ]]; then
+        cp -pf /usr/local/bin/sing-box.bak /usr/local/bin/sing-box
+        [[ -f /usr/bin/sing-box ]] && cp -pf /usr/local/bin/sing-box.bak /usr/bin/sing-box
         systemctl restart sing-box
+        echo "⚠️ 已回滚至旧版本。"
     fi
     exit 1
 fi
 EOF
     chmod +x /usr/local/bin/update_singbox.sh
+    ln -sf /usr/local/bin/update_singbox.sh /usr/local/bin/update-sing-box
 
     # 3. 写入 Sing-box 基础配置文件 (若无则生成模板)
     if [[ ! -f /etc/sing-box/config.json ]]; then
@@ -971,8 +869,8 @@ show_summary() {
     echo -e "  - ⚡ ${GREEN}Sing-box 代理入站端口${PLAIN} : ${YELLOW}${LOCAL_IP}:7891${PLAIN} (Socks5)"
     echo ""
     echo -e "${CYAN}【已配置的平滑升级与运维工具】:${PLAIN}"
-    echo -e "  - ⚡ 升级 Sing-box 核心 : ${YELLOW}sudo /usr/local/bin/update_singbox.sh${PLAIN} (--check 检查, --force 强制)"
-    echo -e "  - 🌐 升级 MosDNS 核心   : ${YELLOW}sudo /usr/local/bin/update_mosdns.sh${PLAIN} (--check 检查, --force 强制)"
+    echo -e "  - ⚡ 升级 Sing-box 核心 : ${YELLOW}sudo /usr/local/bin/update-sing-box${PLAIN} (或 update_singbox.sh)"
+    echo -e "  - 🌐 升级 MosDNS 核心   : ${YELLOW}sudo /usr/local/bin/update-mosdns${PLAIN} (或 update_mosdns.sh)"
     echo -e "  - 📊 升级 Web 仪表板    : ${YELLOW}sudo /usr/local/bin/update_metacubexd.sh${PLAIN}"
     echo -e "  - 📋 升级 DNS 规则库    : ${YELLOW}sudo /etc/mosdns/mos_rule_update.sh${PLAIN}"
     echo ""
