@@ -106,6 +106,19 @@ bash <(curl -fsSL https://raw.githubusercontent.com/luckyjamesriver/singbox-mosd
 
 ---
 
+### 🧰 核心服务日常维护与升级
+
+项目针对生产环境配置了完备的安全升级脚本，具备**升级前语法校验、旧版本自动备份与失败自动回滚**能力：
+
+| 服务模块 | 升级命令 | 说明 |
+| :--- | :--- | :--- |
+| **⚡ Sing-box 核心** | `sudo /usr/local/bin/update_singbox.sh` | 从官方 deb822 源检测升级，升级前/后自动检验 config.json 语法 |
+| **🌐 MosDNS 核心** | `sudo /usr/local/bin/update_mosdns.sh` | 自动检测 CPU 架构并拉取 GitHub 最新版本，支持多镜像容灾下载与平滑重启 |
+| **📊 MetaCubeXD WebUI** | `sudo /usr/local/bin/update_metacubexd.sh` | 拉取 GitHub 最新 gh-pages 前端构建并更新静态资源 |
+| **📋 MosDNS 规则集** | `sudo /etc/mosdns/mos_rule_update.sh` | 更新国内直连白名单、淘宝防误判规则及广告黑名单 |
+
+---
+
 ### 🙏 特别鸣谢与参考
 
 - [MikroTik / RouterOS](https://mikrotik.com/)
