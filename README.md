@@ -117,6 +117,15 @@ bash <(curl -fsSL https://raw.githubusercontent.com/luckyjamesriver/singbox-mosd
 | **📊 MetaCubeXD WebUI** | `sudo /usr/local/bin/update_metacubexd.sh` | 拉取 GitHub 最新 gh-pages 前端构建并更新静态资源 |
 | **📋 MosDNS 规则集** | `sudo /etc/mosdns/mos_rule_update.sh` | 更新国内直连白名单、淘宝防误判规则及广告黑名单 |
 
+#### 💡 运维排错小贴士：远端 VPS 节点升级/重启后快速重连
+* **现象**：当远端 VPS 的 sing-box 服务升级或重启后，本地旁路由可能无法立即恢复连通，甚至需要手动切换备用线路。
+* **原因剖析**：
+  1. 服务端进程重启会切断旧连接，而本地客户端长连接（Reality TCP 零拷贝直通、gRPC 流、TUIC/Hy2 QUIC 会话）可能处于半开超时等待状态；
+  2. `urltest` 自动测速组存在轮询间隔（默认 3~5 分钟），在此期间本地仍将该节点标记为故障。
+* **秒连技巧**：
+  - **手动秒连（推荐 SOP）**：远端 VPS 重启完毕后，**立即在本地旁路由执行 `sudo systemctl restart sing-box`**（或在 MetaCubeXD 面板中重载）。重启瞬间会清空所有半开死连接并强制触发首轮即时测速，实现秒级重连。
+  - **配置自愈优化**：在 `/etc/sing-box/config.json` 中，将 `urltest` 测速组的 `interval` 缩短至 `1m`（或 30s），`tolerance` 设为 `50`，即可在 VPS 恢复后 1 分钟内全自动探测重连，无需人工干预。
+
 ---
 
 ### 🙏 特别鸣谢与参考
