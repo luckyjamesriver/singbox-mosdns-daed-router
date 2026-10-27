@@ -2,6 +2,9 @@
 
 > 基于 **零刻 EQ12 (Intel i3-N300 双 2.5G) + Proxmox VE 9 + RouterOS 主路由 + Debian 12 (daed eBPF + Sing-box 1.14+ + MosDNS + Keepalived 双机高可用旁路由)** 的现代低延迟、高吞吐、高稳定全能家庭网络全套架构方案。
 
+> [!TIP]
+> **配套服务端脚本推荐**：如果您还没有自建翻墙节点，强烈推荐使用配套的自动化 VPS 部署项目 👉 **[vps-sing-box](https://github.com/luckyjamesriver/vps-sing-box)**，一键极速部署抗封锁全 UDP 矩阵（Hysteria 2 动态端口跳跃 + TUIC v5 + VLESS-Reality）。服务端安装完成后会自动导出专用于本旁路由的节点配置片段，两项目配置无缝对齐！
+
 ---
 
 ### 🌟 架构演进与设计亮点
