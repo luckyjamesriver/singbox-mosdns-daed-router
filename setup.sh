@@ -869,7 +869,7 @@ show_summary() {
     echo -e "  - 📋 升级 DNS 规则库    : ${YELLOW}sudo /etc/mosdns/mos_rule_update.sh${PLAIN}"
     echo ""
     echo -e "----------------------------------------------------"
-    echo -e "${CYAN}【关于翻墙节点配置】:${PLAIN}"
+    echo -e "${CYAN}【关于外网节点配置】:${PLAIN}"
     echo -e "  - 旁路由基础服务现已就绪，当前 Sing-box 处于安全直连（保底）模式。"
     echo -e "  - 💡 ${YELLOW}还没有自建节点？${PLAIN} 推荐使用配套服务端脚本部署 VPS: ${BLUE}https://github.com/luckyjamesriver/vps-sing-box${PLAIN}"
     echo -e "  - 🔑 ${YELLOW}已有自建节点？${PLAIN} 请将您的节点信息填入 ${CYAN}/etc/sing-box/config.json${PLAIN} 并执行: ${GREEN}systemctl restart sing-box${PLAIN}"
