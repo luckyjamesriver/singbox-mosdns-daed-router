@@ -106,18 +106,15 @@ cp -f "$NEW_BIN" /usr/local/bin/mosdns
 chmod +x /usr/local/bin/mosdns
 rm -rf "${TMP_DIR}"
 
-# 8. 恢复并验证服务
-systemctl restart mosdns
-sleep 1
-
-if systemctl is-active --quiet mosdns; then
+# 8. 恢复并验证服务 (将 restart 纳入条件判断，防止 set -e 在重启失败时直接退出导致无法回滚)
+if systemctl restart mosdns && systemctl is-active --quiet mosdns; then
     echo "🎉 MosDNS 已成功更新至 ${LATEST_TAG} 并重启服务！"
     /usr/local/bin/mosdns version
 else
     echo "❌ 服务启动失败，正在回滚旧版程序..."
     if [[ -f /usr/local/bin/mosdns.bak ]]; then
         cp -pf /usr/local/bin/mosdns.bak /usr/local/bin/mosdns
-        systemctl restart mosdns
+        systemctl restart mosdns || true
         echo "⚠️ 已回滚至旧版本。"
     fi
     exit 1

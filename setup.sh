@@ -154,7 +154,7 @@ install_mosdns() {
 
     info "从 GitHub 获取最新稳定版 MosDNS..."
     local mosdns_url
-    mosdns_url=$(curl -fsSL https://api.github.com/repos/IrineSistiana/mosdns/releases/latest 2>/dev/null | jq -r ".assets[] | select(.name=="mosdns-linux-${PKG_ARCH}.zip") | .browser_download_url" || true)
+    mosdns_url=$(curl -fsSL https://api.github.com/repos/IrineSistiana/mosdns/releases/latest 2>/dev/null | jq -r --arg name "mosdns-linux-${PKG_ARCH}.zip" '.assets[] | select(.name==$name) | .browser_download_url' 2>/dev/null || true)
     if [[ -z "${mosdns_url}" || "${mosdns_url}" == "null" ]]; then
         mosdns_url="https://github.com/IrineSistiana/mosdns/releases/download/v5.3.4/mosdns-linux-${PKG_ARCH}.zip"
     fi
@@ -260,9 +260,9 @@ plugins:
     args:
       concurrent: 3
       upstreams:
-        - addr: "${GATEWAY_IP}"
         - addr: "223.5.5.5"
         - addr: "119.29.29.29"
+        - addr: "114.114.114.114"
 
   # 国内备用 (TCP + DoH)
   - tag: dns_cn_backup
@@ -341,8 +341,8 @@ plugins:
       - matches: qtype 28
         exec: reject 0
 
-      # 屏蔽 HTTPS RR (防止 ECH 绕过)
-      - matches: qtype 12 65
+      # 屏蔽 HTTPS RR (屏蔽 64 SVCB 与 65 HTTPS，防止 ECH 绕过)
+      - matches: qtype 64 65
         exec: reject 3
 
       # 广告拦截
@@ -552,17 +552,14 @@ cp -f "$NEW_BIN" /usr/local/bin/mosdns
 chmod +x /usr/local/bin/mosdns
 rm -rf "${TMP_DIR}"
 
-systemctl restart mosdns
-sleep 1
-
-if systemctl is-active --quiet mosdns; then
+if systemctl restart mosdns && systemctl is-active --quiet mosdns; then
     echo "🎉 MosDNS 已成功更新至 ${LATEST_TAG} 并重启服务！"
     /usr/local/bin/mosdns version
 else
     echo "❌ 服务启动失败，正在回滚旧版程序..."
     if [[ -f /usr/local/bin/mosdns.bak ]]; then
         cp -pf /usr/local/bin/mosdns.bak /usr/local/bin/mosdns
-        systemctl restart mosdns
+        systemctl restart mosdns || true
         echo "⚠️ 已回滚至旧版本。"
     fi
     exit 1
@@ -746,10 +743,7 @@ fi
 
 rm -rf "${TMP_DIR}"
 
-systemctl restart sing-box
-sleep 1
-
-if systemctl is-active --quiet sing-box; then
+if systemctl restart sing-box && systemctl is-active --quiet sing-box; then
     echo "🎉 sing-box 已成功更新至 ${LATEST_TAG} 并重启服务！"
     /usr/local/bin/sing-box version
 else
@@ -757,7 +751,7 @@ else
     if [[ -f /usr/local/bin/sing-box.bak ]]; then
         cp -pf /usr/local/bin/sing-box.bak /usr/local/bin/sing-box
         [[ -f /usr/bin/sing-box ]] && cp -pf /usr/local/bin/sing-box.bak /usr/bin/sing-box
-        systemctl restart sing-box
+        systemctl restart sing-box || true
         echo "⚠️ 已回滚至旧版本。"
     fi
     exit 1
