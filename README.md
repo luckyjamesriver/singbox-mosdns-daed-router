@@ -18,7 +18,7 @@
    - **核心联动**：DHCP 下发网关与 DNS 全权指向 Keepalived VIP (`10.10.11.10`)，主路由与旁路由职责清晰分离。
 3. **Debian 12 + daed (eBPF) + Sing-box 1.14+ 极速旁路由**：
    - 采用 Linux 内核级 **eBPF** 技术在链路层截流分流，免去繁琐的 iptables，CPU 负载极低；
-   - Sing-box 1.14+ 官方 deb822 源规范管理，搭载 VLESS-Reality-Vision (XTLS Vision 内核零拷贝直通)、VLESS-Reality-gRPC、Hysteria 2 (下行 500M / 上行 50M 满血加速)、TUIC v5 四重高速出站协议；
+   - Sing-box 1.14+ 官方 deb822 源规范管理，搭载双线热备 (主力线路 + 备用线路) 与全 UDP/QUIC 强抗封锁矩阵 (Hysteria 2 动态端口跳跃 45000:50000、固定端口 Hysteria 2、TUIC v5、NaïveProxy HTTP/3 QUIC)，彻底免疫 GFW TCP 丢包阻断与 ISP 单端口 UDP QoS 限速；
    - 集成 MetaCubeXD Web 仪表板 (`:9090`) 实时测速与节点优选。
 4. **MosDNS v5 国内外智能防污染分流**：
    - 本地轻量监听 `:53`，精准分流国内白名单直连与海外 AI/常用域名代理，搭配大容量内存缓存；
@@ -53,7 +53,7 @@ bash <(curl -fsSL https://raw.githubusercontent.com/luckyjamesriver/singbox-mosd
 | **步骤 00** | [00. 安装 PVE9](./00.安装%20PVE9.md) | 零刻 EQ12 BIOS 调优、PVE 9 系统安装、清华源配置、双 2.5G 虚拟网络与硬件直通 |
 | **步骤 01** | [01. 安装 RouterOS 虚拟机](./01.安装%20RouterOS%20虚拟机.md) | 导入 CHR 官方 OVA/RAW 磁盘、WAN/LAN 接口规划、PPPoE 拨号与 DHCP VIP 网关下发 |
 | **步骤 02** | [02. 安装 Debian12 虚拟机](./02.安装%20Debian12%20虚拟机.md) | 创建 4核4G VirtIO 虚拟机、ens18 静态 IP/DNS、开启 BBR、关闭 ICMP 重定向防环 |
-| **步骤 03** | [03. 安装 sing-box](./03.安装%20sing-box.md) | APT deb822 安装 Sing-box 1.14+、Socks5 7891 进站、四重协议出站与 MetaCubeXD 面板 |
+| **步骤 03** | [03. 安装 sing-box](./03.安装%20sing-box.md) | APT deb822 安装 Sing-box 1.14+、Socks5 7891 进站、双线纯 UDP 矩阵出站 (Hy2 端口跳跃+TUIC+Naive) 与 MetaCubeXD 面板 |
 | **步骤 04** | [04. 安装 mosdns](./04.安装%20mosdns.md) | 安装 mosdns v5，配置国内外域名/IP 规则集、分流策略与本地 DNS 缓存 |
 | **步骤 05** | [05. 安装 daed](./05.安装%20daed.md) | 安装 daed v1.27.0+，配置 eBPF 透明代理规则、AI 平台分流与 ToWorld 节点绑定 |
 | **步骤 06** | [06. 安装 keepalived](./06.安装%20keepalived.md) | PVE 克隆备机、部署 Keepalived VRRP 双机热备 (VIP: 10.10.11.10)、DNS 业务心跳检测 |
