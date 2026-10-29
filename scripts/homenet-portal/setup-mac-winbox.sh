@@ -35,17 +35,28 @@ on open location this_URL
 			set targetHost to text 1 through -2 of targetHost
 		end if
 		
+		-- Check if URL contains user:password@host
 		if targetHost contains "@" then
 			set savedDelims to AppleScript's text item delimiters
 			set AppleScript's text item delimiters to "@"
-			set hostParts to text items of targetHost
-			set targetHost to last item of hostParts
-			set AppleScript's text item delimiters to savedDelims
-		end if
-		
-		if targetHost is not "" then
-			do shell script "open -a WinBox --args " & quoted form of targetHost
+			set urlParts to text items of targetHost
+			set authPart to first item of urlParts
+			set hostPart to second item of urlParts
+			
+			if authPart contains ":" then
+				set AppleScript's text item delimiters to ":"
+				set authItems to text items of authPart
+				set userName to first item of authItems
+				set userPass to second item of authItems
+				set AppleScript's text item delimiters to savedDelims
+				do shell script "open -a WinBox --args " & quoted form of hostPart & " " & quoted form of userName & " " & quoted form of userPass
+			else
+				set AppleScript's text item delimiters to savedDelims
+				do shell script "open -a WinBox"
+			end if
 		else
+			-- If only host/IP without password, simply launch WinBox and bring to front,
+			-- so WinBox uses its Saved/Managed connection without wiping the password!
 			do shell script "open -a WinBox"
 		end if
 		
@@ -64,8 +75,8 @@ osacompile -o "$HANDLER_APP" "$TMP_SCRIPT"
 rm -f "$TMP_SCRIPT"
 
 echo "[*] 写入 winbox:// URL Scheme 协议与后台常驻属性..."
-plutil -insert CFBundleURLTypes -xml '<array><dict><key>CFBundleURLName</key><string>WinBox URL Handler</string><key>CFBundleURLSchemes</key><array><string>winbox</string></array></dict></array>' "$HANDLER_APP/Contents/Info.plist"
-plutil -insert LSUIElement -bool true "$HANDLER_APP/Contents/Info.plist"
+plutil -insert CFBundleURLTypes -xml '<array><dict><key>CFBundleURLName</key><string>WinBox URL Handler</string><key>CFBundleURLSchemes</key><array><string>winbox</string></array></dict></array>' "$HANDLER_APP/Contents/Info.plist" || true
+plutil -insert LSUIElement -bool true "$HANDLER_APP/Contents/Info.plist" || true
 plutil -replace CFBundleIdentifier -string "com.mikrotik.winbox.urlhandler" "$HANDLER_APP/Contents/Info.plist"
 
 if [[ -f "$APP_PATH/Contents/Resources/winbox.icns" ]]; then
@@ -78,4 +89,4 @@ echo "[*] 进行轻量签名并向系统 LaunchServices 注册..."
 codesign --force --deep --sign - "$HANDLER_APP"
 /System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister -f "$HANDLER_APP"
 
-echo "[✓] 配置成功！现在在 Chrome、Safari 或 HomeNet Portal 门户中点击「唤起 Winbox」，即可直接秒启并连入指定 RouterOS！"
+echo "[✓] 配置成功！现在在 Chrome、Safari 或 HomeNet Portal 门户中点击「唤起 Winbox」，即可安全拉起 WinBox 客户端！"

@@ -1033,20 +1033,19 @@
         <button class="modal-close" onclick="closeWinboxHelp()">&times;</button>
       </div>
       <div class="modal-body" style="font-family:inherit; font-size:0.83rem; line-height:1.7; background:var(--surface); color:var(--text); white-space:normal;">
-        <p style="margin-bottom:0.75rem;"><strong>1. 为什么浏览器点击唤起可能无反应？</strong><br>
-        MikroTik 官方的 WinBox 客户端（特别是 macOS 版 WinBox 4 或未配置的 Windows）系统默认未注册 <code>winbox://</code> 协议，现代浏览器会默认拦截或提示未知协议。</p>
+        <p style="margin-bottom:0.75rem;"><strong>1. 为什么点击唤起曾提示“用户密码不正确”？</strong><br>
+        WinBox 4 的命令行机制（<code>WinBox IP 用户名 密码</code>）在未附带密码启动时，会强制向 RouterOS 发送“空密码”，导致界面密码框被清空并报错。现已全面优化为纯净激活 WinBox，让客户端直接加载本地 Saved 保存凭据登录！</p>
         
         <p style="margin-bottom:0.75rem;"><strong>2. 解决方案 A：免安装 WebFig（最推荐）</strong><br>
         直接点击左侧深绿色「<strong>WebFig 网页后台</strong>」，RouterOS 原生网页界面功能与 Winbox 几乎完全一致，无需任何本地客户端即可全功能免密/快速管理。</p>
 
-        <p style="margin-bottom:0.75rem;"><strong>3. 解决方案 B：Mac 用户一键关联</strong><br>
-        点击按钮时系统已<strong>自动将 <code>10.10.11.1</code> 复制到剪贴板</strong>。如果在 Mac 上使用 WinBox 4，可通过运行仓库提供的轻量注册脚本一键激活浏览器协议唤起：<br>
-        <code style="display:block; margin-top:0.35rem; padding:0.4rem 0.6rem; background:var(--raised); border:1px solid var(--border); border-radius:4px; font-family:var(--font-mono); font-size:0.75rem;">bash /opt/homenet-portal/setup-mac-winbox.sh</code>
-        <span style="display:block; margin-top:0.25rem; color:var(--muted); font-size:0.74rem;">或在 Mac 终端直接执行：<code>open -a WinBox --args 10.10.11.1</code></span>
-        </p>
+        <p style="margin-bottom:0.75rem;"><strong>3. 解决方案 B：Mac 用户正确连接方式</strong><br>
+        点击按钮唤醒 WinBox 4 客户端后：<br>
+        • 在下方 <strong>Saved (已保存)</strong> 列表中直接<strong>双击 <code>10.10.11.1</code></strong> 即可带密码自动秒登！<br>
+        • 或在 Password 框中手动输入您的 RouterOS 密码后点击 Connect。</p>
 
         <p style="margin-bottom:0.35rem;"><strong>4. 解决方案 C：Windows 用户</strong><br>
-        在 WinBox 主界面的 <strong>Connect To</strong> 中粘贴剪贴板内的 <code>10.10.11.1</code>（默认端口 8291），输入账号密码即可登录。</p>
+        在 WinBox 主界面的 <strong>Connect To</strong> 中粘贴剪贴板内的 <code>10.10.11.1</code>，选择已存密码登录即可。</p>
       </div>
     </div>
   </div>
@@ -1321,7 +1320,7 @@
       if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(ip).catch(() => {});
       }
-      showToast(`⚡ 正在尝试唤起 Winbox (${ip})！已自动复制 IP 至剪贴板。如未弹出请点击右侧「?」查看指南。`);
+      showToast(`⚡ 已唤醒 WinBox 客户端并复制 IP (${ip})！在 Saved 保存列表中双击即可连接。`);
       
       const link = document.createElement('a');
       link.href = `winbox://${ip}`;
