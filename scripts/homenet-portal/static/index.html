@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HomeNet Portal · 全网监控导航</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220%22%20width=%22100%22%20height=%22100%22><text y=%22.9em%22 font-size=%2290%22>🌐</text></svg>">
+  <style>
+    :root {
+      --bg: #0a0d14;
+      --card-bg: rgba(22, 27, 34, 0.82);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --card-hover-border: rgba(99, 102, 241, 0.4);
+      --text-main: #f0f6fc;
+      --text-muted: #8b949e;
+      --text-dim: #6e7681;
+      --accent-blue: #38bdf8;
+      --accent-green: #22c55e;
+      --accent-yellow: #eab308;
+      --accent-purple: #a855f7;
+      --accent-red: #ef4444;
+      --badge-bg: rgba(255, 255, 255, 0.06);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      background-image: radial-gradient(circle at 50% 0%, rgba(56, 189, 248, 0.08) 0%, transparent 60%);
+      background-attachment: fixed;
+    }
+
+    /* Header */
+    header {
+      backdrop-filter: blur(12px);
+      background: rgba(10, 13, 20, 0.75);
+      border-bottom: 1px solid var(--card-border);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      padding: 0.85rem 1.5rem;
+    }
+
+    .header-inner {
+      max-width: 1400px;
+      margin: 0 auto;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .brand-icon {
+      font-size: 1.6rem;
+      background: linear-gradient(135deg, #38bdf8, #818cf8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .brand h1 {
+      font-size: 1.15rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .brand span {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      margin-left: 0.35rem;
+      padding: 0.15rem 0.45rem;
+      background: var(--badge-bg);
+      border-radius: 4px;
+      border: 1px solid var(--card-border);
+    }
+
+    .header-metrics {
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+      flex-wrap: wrap;
+    }
+
+    .metric-pill {
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+      background: var(--badge-bg);
+      border: 1px solid var(--card-border);
+      padding: 0.35rem 0.75rem;
+      border-radius: 9999px;
+      font-size: 0.82rem;
+      font-weight: 500;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    .dot-green { background: var(--accent-green); box-shadow: 0 0 8px var(--accent-green); }
+    .dot-yellow { background: var(--accent-yellow); box-shadow: 0 0 8px var(--accent-yellow); }
+    .dot-red { background: var(--accent-red); box-shadow: 0 0 8px var(--accent-red); }
+
+    /* Main Container */
+    main {
+      flex: 1;
+      max-width: 1400px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 1.5rem;
+    }
+
+    /* Grid Layout */
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+      gap: 1.25rem;
+    }
+
+    /* Cards */
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      backdrop-filter: blur(10px);
+      transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card:hover {
+      border-color: var(--card-hover-border);
+      box-shadow: 0 8px 24px -8px rgba(0, 0, 0, 0.5);
+    }
+
+    .card-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+    }
+
+    .card-title-group {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+    }
+
+    .card-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--card-border);
+    }
+
+    .card-title {
+      font-size: 1.05rem;
+      font-weight: 600;
+    }
+
+    .card-subtitle {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+
+    .badge-status {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-size: 0.75rem;
+      padding: 0.2rem 0.55rem;
+      border-radius: 6px;
+      font-weight: 600;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--card-border);
+    }
+
+    .badge-ok {
+      color: var(--accent-green);
+      border-color: rgba(34, 197, 94, 0.3);
+      background: rgba(34, 197, 94, 0.08);
+    }
+
+    .badge-warn {
+      color: var(--accent-yellow);
+      border-color: rgba(234, 179, 8, 0.3);
+      background: rgba(234, 179, 8, 0.08);
+    }
+
+    .badge-err {
+      color: var(--accent-red);
+      border-color: rgba(239, 68, 68, 0.3);
+      background: rgba(239, 68, 68, 0.08);
+    }
+
+    /* Card Body Stats */
+    .card-body {
+      margin-bottom: 1.25rem;
+    }
+
+    .stat-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.45rem 0;
+      border-bottom: 1px dashed rgba(255, 255, 255, 0.05);
+      font-size: 0.85rem;
+    }
+
+    .stat-row:last-child {
+      border-bottom: none;
+    }
+
+    .stat-label {
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    .stat-val {
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    .stat-val.highlight {
+      color: var(--accent-blue);
+    }
+
+    /* Progress bar */
+    .progress-wrap {
+      width: 100%;
+      height: 6px;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 3px;
+      overflow: hidden;
+      margin-top: 0.25rem;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #38bdf8, #818cf8);
+      border-radius: 3px;
+      transition: width 0.3s ease;
+    }
+
+    /* Card Actions */
+    .card-actions {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: auto;
+    }
+
+    .btn {
+      flex: 1;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+      padding: 0.55rem 0.85rem;
+      border-radius: 8px;
+      font-size: 0.82rem;
+      font-weight: 500;
+      text-decoration: none;
+      transition: all 0.15s ease;
+      cursor: pointer;
+      border: 1px solid var(--card-border);
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--text-main);
+    }
+
+    .btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .btn-primary {
+      background: rgba(56, 189, 248, 0.12);
+      border-color: rgba(56, 189, 248, 0.3);
+      color: var(--accent-blue);
+    }
+
+    .btn-primary:hover {
+      background: rgba(56, 189, 248, 0.22);
+      border-color: rgba(56, 189, 248, 0.5);
+    }
+
+    /* Tools Bar Section */
+    .tools-section {
+      margin-top: 1.5rem;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 1.25rem;
+    }
+
+    .tools-title {
+      font-size: 0.95rem;
+      font-weight: 600;
+      margin-bottom: 0.85rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: var(--text-muted);
+    }
+
+    .tools-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 0.75rem;
+    }
+
+    .tool-link {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.65rem 0.85rem;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--card-border);
+      color: var(--text-main);
+      text-decoration: none;
+      font-size: 0.82rem;
+      transition: all 0.15s ease;
+    }
+
+    .tool-link:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: var(--card-hover-border);
+      transform: translateY(-1px);
+    }
+
+    /* Modal for Mosdns logs */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(8px);
+      z-index: 999;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+
+    .modal-content {
+      background: #11151c;
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      width: 100%;
+      max-width: 800px;
+      max-height: 80vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.8);
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--card-border);
+    }
+
+    .modal-body {
+      padding: 1rem;
+      overflow-y: auto;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 0.78rem;
+      line-height: 1.5;
+      background: #090c10;
+      color: #7ee787;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+
+    .modal-close {
+      cursor: pointer;
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 1.3rem;
+    }
+
+    /* Footer */
+    footer {
+      text-align: center;
+      padding: 1.5rem;
+      color: var(--text-dim);
+      font-size: 0.78rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.04);
+      margin-top: 2rem;
+    }
+
+    @media (max-width: 768px) {
+      .dashboard-grid {
+        grid-template-columns: 1fr;
+      }
+      .header-metrics {
+        width: 100%;
+        justify-content: flex-start;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header>
+    <div class="header-inner">
+      <div class="brand">
+        <div class="brand-icon">🌐</div>
+        <div>
+          <h1>HomeNet Portal</h1>
+          <div style="font-size:0.75rem; color:var(--text-muted);">全网核心路由 · 监控导航中心</div>
+        </div>
+      </div>
+
+      <div class="header-metrics">
+        <!-- Public IP -->
+        <div class="metric-pill">
+          <span class="status-dot dot-green"></span>
+          <span>公网出口:</span>
+          <span id="hdr-pubip" style="color:var(--accent-blue)">检测中...</span>
+        </div>
+
+        <!-- WAN Speed Total -->
+        <div class="metric-pill">
+          <span style="color:var(--accent-green)">🔻</span>
+          <span id="hdr-down">0 B/s</span>
+          <span style="color:var(--accent-blue); margin-left:0.35rem;">🔺</span>
+          <span id="hdr-up">0 B/s</span>
+        </div>
+
+        <!-- Auto Refresh Indicator -->
+        <div class="metric-pill" style="color:var(--text-dim); font-size:0.75rem;">
+          <span id="refresh-ticker">⚡ 3s 刷新</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main>
+    <div class="dashboard-grid">
+
+      <!-- 1. RouterOS Card -->
+      <div class="card" id="card-ros">
+        <div>
+          <div class="card-header">
+            <div class="card-title-group">
+              <div class="card-avatar">📦</div>
+              <div>
+                <div class="card-title">RouterOS 主路由</div>
+                <div class="card-subtitle">MikroTik CHR (10.10.11.1)</div>
+              </div>
+            </div>
+            <div id="ros-badge" class="badge-status badge-ok">
+              <span class="status-dot dot-green"></span>
+              <span id="ros-status-text">检测中</span>
+            </div>
+          </div>
+
+          <div class="card-body">
+            <div class="stat-row">
+              <span class="stat-label">⚡ 运行时间 (Uptime)</span>
+              <span class="stat-val" id="ros-uptime">--</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-label">💻 CPU 负荷</span>
+              <span class="stat-val" id="ros-cpu">-- %</span>
+            </div>
+            <div class="progress-wrap"><div id="ros-cpu-bar" class="progress-fill" style="width: 0%"></div></div>
+
+            <div class="stat-row" style="margin-top:0.5rem;">
+              <span class="stat-label">🧠 内存使用</span>
+              <span class="stat-val" id="ros-mem">--</span>
+            </div>
+            <div class="progress-wrap"><div id="ros-mem-bar" class="progress-fill" style="width: 0%"></div></div>
+
+            <div class="stat-row" style="margin-top:0.5rem;">
+              <span class="stat-label">🌊 WAN 即时流速</span>
+              <span class="stat-val highlight" id="ros-wan-speed">--</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-label">📱 在线客户端数</span>
+              <span class="stat-val" id="ros-dhcp">-- 台</span>
+            </div>
+            <div id="ros-hint-row" class="stat-row" style="display:none; color:var(--accent-yellow); font-size:0.75rem;">
+              <span id="ros-hint-text"></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-actions">
+          <a class="btn btn-primary" href="http://10.10.11.1" target="_blank">🌐 WebFig 网页管理</a>
+          <a class="btn" href="winbox://10.10.11.1">🖥️ 唤起 Winbox</a>
+        </div>
+      </div>
+
+      <!-- 2. MosDNS Card -->
+      <div class="card" id="card-mosdns">
+        <div>
+          <div class="card-header">
+            <div class="card-title-group">
+              <div class="card-avatar">🛡️</div>
+              <div>
+                <div class="card-title">MosDNS 解析中心</div>
+                <div class="card-subtitle">极速智能分流 · 防泄漏 (端口 :53)</div>
+              </div>
+            </div>
+            <div id="mos-badge" class="badge-status badge-ok">
+              <span class="status-dot dot-green"></span>
+              <span id="mos-status-text">检测中</span>
+            </div>
+          </div>
+
+          <div class="card-body">
+            <div class="stat-row">
+              <span class="stat-label">🔌 端口 53 状态</span>
+              <span class="stat-val" id="mos-port-stat">--</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-label">⚡ 本地 DNS 探针响应</span>
+              <span class="stat-val highlight" id="mos-latency">-- ms</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-label">🧠 进程物理内存 (RSS)</span>
+              <span class="stat-val" id="mos-mem">-- MB</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-label">🛡️ 过去日志异常监测</span>
+              <span class="stat-val" id="mos-health-badge">--</span>
+            </div>
+            <div id="mos-alert-box" style="display:none; margin-top:0.5rem; padding:0.5rem 0.65rem; background:rgba(234, 179, 8, 0.1); border-left:3px solid var(--accent-yellow); border-radius:4px; font-size:0.75rem; color:#fef08a;">
+              <strong>最新警报:</strong> <span id="mos-alert-msg"></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-actions">
+          <button class="btn btn-primary" onclick="openMosdnsLogs()">📋 查看运行日志</button>
+        </div>
+      </div>
+
+      <!-- 3. sing-box Card -->
+      <div class="card" id="card-singbox">
+        <div>
+          <div class="card-header">
+            <div class="card-title-group">
+              <div class="card-avatar">⚡</div>
+              <div>
+                <div class="card-title">Sing-box 代理核心</div>
+                <div class="card-subtitle">Clash-API 入口 (端口 :9090)</div>
+              </div>
+            </div>
+            <div id="sb-badge" class="badge-status badge-ok">
+              <span class="status-dot dot-green"></span>
+              <span id="sb-status-text">检测中</span>
+            </div>
+          </div>
+
+          <div class="card-body">
+            <div class="stat-row">
+              <span class="stat-label">🌐 当前出海节点</span>
+              <span class="stat-val highlight" id="sb-node" style="max-width:180px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">--</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-label">🔻 即时下行速率</span>
+              <span class="stat-val" style="color:var(--accent-green)" id="sb-down">0 B/s</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-label">🔺 即时上行速率</span>
+              <span class="stat-val" style="color:var(--accent-blue)" id="sb-up">0 B/s</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-label">📊 累计总吞吐</span>
+              <span class="stat-val" id="sb-total">🔻 -- / 🔺 --</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-label">🔗 活跃连接数</span>
+              <span class="stat-val" id="sb-conns">0 条</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-actions">
+          <a class="btn btn-primary" href="http://10.10.11.8:9090/ui" target="_blank">📊 MetaCubeXD 控制台</a>
+        </div>
+      </div>
+
+      <!-- 4. daed Card -->
+      <div class="card" id="card-daed">
+        <div>
+          <div class="card-header">
+            <div class="card-title-group">
+              <div class="card-avatar">🚀</div>
+              <div>
+                <div class="card-title">daed eBPF 透明代理</div>
+                <div class="card-subtitle">内核透明重定向 (端口 :2023)</div>
+              </div>
+            </div>
+            <div id="daed-badge" class="badge-status badge-ok">
+              <span class="status-dot dot-green"></span>
+              <span id="daed-status-text">检测中</span>
+            </div>
+          </div>
+
+          <div class="card-body">
+            <div class="stat-row">
+              <span class="stat-label">🌐 WebUI 服务</span>
+              <span class="stat-val">http://10.10.11.8:2023</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-label">⏱️ 探针连接延时</span>
+              <span class="stat-val highlight" id="daed-lat">-- ms</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-label">🛡️ 分流机制</span>
+              <span class="stat-val">eBPF 内核级透明劫持</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-label">💡 协同工作</span>
+              <span class="stat-val">接管全屋流量送入 Sing-box</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-actions">
+          <a class="btn btn-primary" href="http://10.10.11.8:2023" target="_blank">⚙️ 打开 daed 管理面板</a>
+        </div>
+      </div>
+
+      <!-- 5. Host & Keepalived Card -->
+      <div class="card" id="card-host">
+        <div>
+          <div class="card-header">
+            <div class="card-title-group">
+              <div class="card-avatar">🖥️</div>
+              <div>
+                <div class="card-title">Debian 旁路由底座</div>
+                <div class="card-subtitle">系统宿主与高可用集群</div>
+              </div>
+            </div>
+            <div id="ha-badge" class="badge-status badge-ok">
+              <span class="status-dot dot-green"></span>
+              <span id="ha-status-text">在线</span>
+            </div>
+          </div>
+
+          <div class="card-body">
+            <div class="stat-row">
+              <span class="stat-label">🔄 Keepalived VIP 角色</span>
+              <span class="stat-val highlight" id="ha-role">--</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-label">⏱️ 宿主 Uptime</span>
+              <span class="stat-val" id="host-uptime">--</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-label">💻 宿主负载 (LoadAvg)</span>
+              <span class="stat-val" id="host-load">--</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-label">🧠 内存使用</span>
+              <span class="stat-val" id="host-mem">--</span>
+            </div>
+            <div class="progress-wrap"><div id="host-mem-bar" class="progress-fill" style="width: 0%"></div></div>
+
+            <div class="stat-row" style="margin-top:0.5rem;">
+              <span class="stat-label">💾 磁盘存储</span>
+              <span class="stat-val" id="host-disk">--</span>
+            </div>
+            <div class="progress-wrap"><div id="host-disk-bar" class="progress-fill" style="width: 0%"></div></div>
+          </div>
+        </div>
+
+        <div class="card-actions">
+          <a class="btn btn-primary" href="https://10.10.11.2:8006" target="_blank">🖥️ PVE 9 宿主机面板</a>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Quick Tools Section -->
+    <div class="tools-section">
+      <div class="tools-title">
+        <span>🛠️ 常用网络测试与测速工具</span>
+      </div>
+      <div class="tools-grid">
+        <a class="tool-link" href="https://www.speedtest.net/" target="_blank">
+          <span>🚀</span>
+          <span>Speedtest 测速</span>
+        </a>
+        <a class="tool-link" href="https://ipleak.net/" target="_blank">
+          <span>🛡️</span>
+          <span>DNS 泄漏检测</span>
+        </a>
+        <a class="tool-link" href="https://ipinfo.io/" target="_blank">
+          <span>🌍</span>
+          <span>IP 归属与纯净度</span>
+        </a>
+        <a class="tool-link" href="https://fast.com/" target="_blank">
+          <span>⚡</span>
+          <span>Netflix Fast 测速</span>
+        </a>
+        <a class="tool-link" href="https://ping.pe/" target="_blank">
+          <span>📡</span>
+          <span>全球 Ping.pe 路由</span>
+        </a>
+        <a class="tool-link" href="http://10.10.11.2:8006" target="_blank">
+          <span>🖥️</span>
+          <span>PVE 9 虚拟化集群</span>
+        </a>
+      </div>
+    </div>
+  </main>
+
+  <!-- Modal for MosDNS logs -->
+  <div class="modal" id="modal-logs">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div style="font-weight:600; font-size:0.95rem;">📋 MosDNS 运行日志 (最近 60 条)</div>
+        <button class="modal-close" onclick="closeMosdnsLogs()">&times;</button>
+      </div>
+      <div class="modal-body" id="modal-log-body">加载中...</div>
+    </div>
+  </div>
+
+  <footer>
+    HomeNet Portal · 纯原生极简零开销架构 · Built with Antigravity
+  </footer>
+
+  <script>
+    async function fetchStatus() {
+      try {
+        const resp = await fetch('/api/status');
+        if (!resp.ok) return;
+        const json = await resp.json();
+        const d = json.data;
+
+        // 1. Header Public IP & Totals
+        if (d.public_ip && d.public_ip.ip) {
+          document.getElementById('hdr-pubip').innerText = d.public_ip.ip;
+        }
+
+        if (d.singbox) {
+          document.getElementById('hdr-down').innerText = d.singbox.download_speed || '0 B/s';
+          document.getElementById('hdr-up').innerText = d.singbox.upload_speed || '0 B/s';
+        }
+
+        // 2. RouterOS
+        if (d.routeros) {
+          const r = d.routeros;
+          const rosBadge = document.getElementById('ros-badge');
+          const rosText = document.getElementById('ros-status-text');
+
+          if (r.rest_available) {
+            rosBadge.className = 'badge-status badge-ok';
+            rosText.innerText = 'REST & Winbox 在线';
+            document.getElementById('ros-uptime').innerText = r.uptime || '--';
+            document.getElementById('ros-cpu').innerText = (r.cpu_load !== null ? r.cpu_load + ' %' : '--');
+            document.getElementById('ros-cpu-bar').style.width = (r.cpu_load || 0) + '%';
+
+            if (r.free_memory_mb !== null && r.total_memory_mb !== null) {
+              const used = r.total_memory_mb - r.free_memory_mb;
+              document.getElementById('ros-mem').innerText = `${used}M / ${r.total_memory_mb}M (${r.memory_pct}%)`;
+              document.getElementById('ros-mem-bar').style.width = (r.memory_pct || 0) + '%';
+            }
+
+            document.getElementById('ros-wan-speed').innerText = `🔻 ${r.wan_rx_speed} / 🔺 ${r.wan_tx_speed}`;
+            document.getElementById('ros-dhcp').innerText = (r.dhcp_leases !== null ? r.dhcp_leases + ' 台' : '--');
+            document.getElementById('ros-hint-row').style.display = 'none';
+          } else if (r.online) {
+            rosBadge.className = 'badge-status badge-ok';
+            rosText.innerText = `Winbox 在线 (${r.ping_ms} ms)`;
+            document.getElementById('ros-uptime').innerText = '运行中 (Winbox 就绪)';
+            document.getElementById('ros-cpu').innerText = '需 REST API 采集';
+            document.getElementById('ros-mem').innerText = '端口 8291 响应正常';
+            document.getElementById('ros-wan-speed').innerText = '--';
+            document.getElementById('ros-dhcp').innerText = '--';
+            document.getElementById('ros-hint-row').style.display = 'flex';
+            document.getElementById('ros-hint-text').innerText = '提示: ' + (r.msg || '开启 www 端口可显示 CPU/流量水表');
+          } else {
+            rosBadge.className = 'badge-status badge-err';
+            rosText.innerText = '离线 / 超时';
+          }
+        }
+
+        // 3. MosDNS
+        if (d.mosdns) {
+          const m = d.mosdns;
+          const mosBadge = document.getElementById('mos-badge');
+          const mosText = document.getElementById('mos-status-text');
+
+          if (m.service_active) {
+            mosBadge.className = 'badge-status badge-ok';
+            mosText.innerText = '正常运行';
+          } else {
+            mosBadge.className = 'badge-status badge-err';
+            mosText.innerText = '服务已停止';
+          }
+
+          document.getElementById('mos-port-stat').innerText = m.port_online ? '🟢 0.0.0.0:53 (UDP/TCP 监听中)' : '🔴 端口未响应';
+          document.getElementById('mos-latency').innerText = (m.dns_latency_ms !== null ? m.dns_latency_ms + ' ms' : '--');
+          document.getElementById('mos-mem').innerText = (m.memory_mb || 0) + ' MB';
+
+          // Log health
+          const mosHealth = document.getElementById('mos-health-badge');
+          const alertBox = document.getElementById('mos-alert-box');
+          if (m.errors_count === 0 && m.warns_count === 0) {
+            mosHealth.innerHTML = '<span style="color:var(--accent-green)">🟢 健康 (0 错误 / 0 警告)</span>';
+            alertBox.style.display = 'none';
+          } else {
+            mosHealth.innerHTML = `<span style="color:var(--accent-yellow)">⚠️ 发现 ${m.errors_count} 错误 / ${m.warns_count} 警告</span>`;
+            if (m.latest_alert) {
+              alertBox.style.display = 'block';
+              document.getElementById('mos-alert-msg').innerText = m.latest_alert;
+            }
+          }
+        }
+
+        // 4. Sing-box
+        if (d.singbox) {
+          const s = d.singbox;
+          const sbBadge = document.getElementById('sb-badge');
+          const sbText = document.getElementById('sb-status-text');
+
+          if (s.online) {
+            sbBadge.className = 'badge-status badge-ok';
+            sbText.innerText = '核心在线';
+          } else {
+            sbBadge.className = 'badge-status badge-err';
+            sbText.innerText = '核心未响应';
+          }
+
+          document.getElementById('sb-node').innerText = s.current_node || '直连模式';
+          document.getElementById('sb-down').innerText = s.download_speed || '0 B/s';
+          document.getElementById('sb-up').innerText = s.upload_speed || '0 B/s';
+          document.getElementById('sb-total').innerText = `🔻 ${s.download_total} / 🔺 ${s.upload_total}`;
+          document.getElementById('sb-conns').innerText = `${s.connections_count} 条 (内存 ${s.memory_mb}M)`;
+        }
+
+        // 5. daed
+        if (d.daed) {
+          const da = d.daed;
+          const daBadge = document.getElementById('daed-badge');
+          const daText = document.getElementById('daed-status-text');
+
+          if (da.online) {
+            daBadge.className = 'badge-status badge-ok';
+            daText.innerText = '正常运行';
+            document.getElementById('daed-lat').innerText = da.latency + ' ms';
+          } else {
+            daBadge.className = 'badge-status badge-err';
+            daText.innerText = '连接超时';
+            document.getElementById('daed-lat').innerText = '--';
+          }
+        }
+
+        // 6. Host & Keepalived
+        if (d.system) {
+          const sys = d.system;
+          document.getElementById('host-uptime').innerText = sys.uptime || '--';
+          document.getElementById('host-load').innerText = sys.load || '--';
+          document.getElementById('host-mem').innerText = `${sys.mem_used} / ${sys.mem_total} (${sys.mem_pct}%)`;
+          document.getElementById('host-mem-bar').style.width = (sys.mem_pct || 0) + '%';
+          document.getElementById('host-disk').innerText = `${sys.disk_used} / ${sys.disk_total} (${sys.disk_pct}%)`;
+          document.getElementById('host-disk-bar').style.width = (sys.disk_pct || 0) + '%';
+        }
+
+        if (d.keepalived) {
+          const ha = d.keepalived;
+          document.getElementById('ha-role').innerText = ha.role_text || '--';
+          if (ha.is_master) {
+            document.getElementById('ha-badge').className = 'badge-status badge-ok';
+            document.getElementById('ha-status-text').innerText = '🟢 MASTER 主机';
+          } else {
+            document.getElementById('ha-badge').className = 'badge-status badge-ok';
+            document.getElementById('ha-status-text').innerText = '🟡 BACKUP 备机';
+          }
+        }
+
+      } catch (err) {
+        console.error("Failed to poll status:", err);
+      }
+    }
+
+    async function openMosdnsLogs() {
+      const modal = document.getElementById('modal-logs');
+      const body = document.getElementById('modal-log-body');
+      modal.style.display = 'flex';
+      body.innerText = '正在读取日志...';
+      try {
+        const resp = await fetch('/api/mosdns/logs');
+        const json = await resp.json();
+        body.innerText = (json.lines && json.lines.length > 0) ? json.lines.join('\n') : '暂无日志记录';
+      } catch (e) {
+        body.innerText = '读取日志失败: ' + e;
+      }
+    }
+
+    function closeMosdnsLogs() {
+      document.getElementById('modal-logs').style.display = 'none';
+    }
+
+    // Auto-poll every 3 seconds
+    fetchStatus();
+    setInterval(fetchStatus, 3000);
+  </script>
+</body>
+</html>

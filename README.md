@@ -60,6 +60,7 @@ bash <(curl -fsSL https://raw.githubusercontent.com/luckyjamesriver/singbox-mosd
 | **步骤 04** | [04. 安装 mosdns](./04.安装%20mosdns.md) | 安装 mosdns v5，配置国内外域名/IP 规则集、分流策略与本地 DNS 缓存 |
 | **步骤 05** | [05. 安装 daed](./05.安装%20daed.md) | 安装 daed v1.27.0+，配置 eBPF 透明代理规则、AI 平台分流与 ToWorld 节点绑定 |
 | **步骤 06** | [06. 安装 keepalived](./06.安装%20keepalived.md) | PVE 克隆备机、部署 Keepalived VRRP 双机热备 (VIP: 10.10.11.10)、DNS 业务心跳检测 |
+| **步骤 07** | [07. 安装 HomeNet 监控仪表盘](./07.安装%20HomeNet%20监控仪表盘.md) | 原生 Python 3 零开销 (Homepage 风格) 全网监控门户 (RouterOS + MosDNS + Sing-box + daed) |
 
 ---
 

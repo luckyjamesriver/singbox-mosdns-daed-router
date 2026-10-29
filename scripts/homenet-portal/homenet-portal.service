@@ -1,0 +1,15 @@
+[Unit]
+Description=HomeNet Portal (Homepage-Style Network Dashboard)
+After=network.target sing-box.service mosdns.service daed.service
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/homenet-portal
+ExecStart=/usr/bin/python3 /opt/homenet-portal/server.py
+Restart=always
+RestartSec=3
+LimitNOFILE=65535
+
+[Install]
+WantedBy=multi-user.target

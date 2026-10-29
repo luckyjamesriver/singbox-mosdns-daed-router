@@ -1,0 +1,32 @@
+{
+  "port": 8888,
+  "refresh_interval_sec": 3,
+  "routeros": {
+    "enabled": true,
+    "host": "10.10.11.1",
+    "port": 80,
+    "use_ssl": false,
+    "username": "admin",
+    "password": "",
+    "wan_interface": "ether1"
+  },
+  "mosdns": {
+    "service_name": "mosdns",
+    "port": 53,
+    "log_file": "/etc/mosdns/mosdns.log"
+  },
+  "singbox": {
+    "clash_api": "http://127.0.0.1:9090",
+    "secret": ""
+  },
+  "daed": {
+    "url": "http://127.0.0.1:2023"
+  },
+  "keepalived": {
+    "vip": "10.10.11.10"
+  },
+  "pve": {
+    "host": "10.10.11.2",
+    "port": 8006
+  }
+}

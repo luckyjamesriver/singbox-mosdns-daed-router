@@ -849,7 +849,39 @@ install_daed() {
     success "daed 服务已成功启动并在 0.0.0.0:2023 开启 WebUI 管理面板！"
 }
 
-# --- 6. 输出完工看板 ---
+# --- 6. 部署 HomeNet Portal 2.0 全网监控仪表盘 ---
+install_homenet_portal() {
+    title "5/5 正在部署 HomeNet Portal 2.0 监控导航仪表盘"
+
+    local portal_dir="/opt/homenet-portal"
+    local raw_base="https://raw.githubusercontent.com/luckyjamesriver/singbox-mosdns-daed-router/main/scripts/homenet-portal"
+    mkdir -p "${portal_dir}/static"
+
+    info "配置 HomeNet Portal 服务端与前端资源..."
+    if [[ -d "./scripts/homenet-portal" ]]; then
+        cp -f "./scripts/homenet-portal/server.py" "${portal_dir}/server.py"
+        cp -f "./scripts/homenet-portal/static/index.html" "${portal_dir}/static/index.html"
+        cp -f "./scripts/homenet-portal/config.example.json" "${portal_dir}/config.example.json"
+        cp -f "./scripts/homenet-portal/homenet-portal.service" "/etc/systemd/system/homenet-portal.service"
+    else
+        wget -qO "${portal_dir}/server.py" "${raw_base}/server.py" || true
+        wget -qO "${portal_dir}/static/index.html" "${raw_base}/static/index.html" || true
+        wget -qO "${portal_dir}/config.example.json" "${raw_base}/config.example.json" || true
+        wget -qO "/etc/systemd/system/homenet-portal.service" "${raw_base}/homenet-portal.service" || true
+    fi
+
+    if [[ ! -f "${portal_dir}/config.json" ]] && [[ -f "${portal_dir}/config.example.json" ]]; then
+        cp "${portal_dir}/config.example.json" "${portal_dir}/config.json"
+    fi
+
+    chmod +x "${portal_dir}/server.py"
+    systemctl daemon-reload
+    systemctl enable homenet-portal --now
+    systemctl restart homenet-portal
+    success "HomeNet Portal 2.0 监控仪表盘已就绪 (监听 :8888)！"
+}
+
+# --- 7. 输出完工看板 ---
 show_summary() {
     clear
     echo -e "${PURPLE}====================================================${PLAIN}"
@@ -859,7 +891,8 @@ show_summary() {
     echo -e "${CYAN}【已就绪的核心服务清单】:${PLAIN}"
     echo -e "  - 🚀 ${GREEN}daed eBPF 管理面板${PLAIN} : ${YELLOW}http://${LOCAL_IP}:2023${PLAIN}"
     echo -e "  - 📊 ${GREEN}MetaCubeXD 监控面板${PLAIN} : ${YELLOW}http://${LOCAL_IP}:9090/ui${PLAIN}"
-    echo -e "  - 🌐 ${GREEN}MosDNS 分流解析端口${PLAIN} : ${YELLOW}${LOCAL_IP}:53${PLAIN} (TCP/UDP)"
+    echo -e "  - 🌐 ${GREEN}HomeNet 全网监控导航${PLAIN} : ${YELLOW}http://${LOCAL_IP}:8888${PLAIN}"
+    echo -e "  - 🛡️  ${GREEN}MosDNS 分流解析端口${PLAIN} : ${YELLOW}${LOCAL_IP}:53${PLAIN} (TCP/UDP)"
     echo -e "  - ⚡ ${GREEN}Sing-box 代理入站端口${PLAIN} : ${YELLOW}${LOCAL_IP}:7891${PLAIN} (Socks5)"
     echo ""
     echo -e "${CYAN}【已配置的平滑升级与运维工具】:${PLAIN}"
@@ -899,4 +932,5 @@ optimize_system
 install_mosdns
 install_singbox
 install_daed
+install_homenet_portal
 show_summary
