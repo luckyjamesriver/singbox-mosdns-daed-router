@@ -8,7 +8,7 @@
     "use_ssl": false,
     "username": "admin",
     "password": "",
-    "wan_interface": "ether1"
+    "wan_interface": "pppoe-out1"
   },
   "mosdns": {
     "service_name": "mosdns",
@@ -28,5 +28,15 @@
   "pve": {
     "host": "10.10.11.2",
     "port": 8006
+  },
+  "vps": {
+    "primary": {
+      "name": "主力出海",
+      "ip": "65.49.216.198"
+    },
+    "backup": {
+      "name": "备用出海",
+      "ip": "107.172.75.159"
+    }
   }
 }

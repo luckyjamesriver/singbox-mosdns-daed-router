@@ -3,7 +3,7 @@
 """
 HomeNet Portal Backend (Homepage-Style Architecture)
 Zero-dependency, pure Python 3 standard library.
-Coordinates: RouterOS REST, MosDNS, sing-box Clash-API, daed, Keepalived & Host Stats.
+Coordinates: RouterOS REST, MosDNS, sing-box Clash-API, daed, Keepalived, VPS & Host Stats.
 """
 
 import os
@@ -24,7 +24,6 @@ STATIC_DIR = os.path.join(BASE_DIR, "static")
 CONFIG_PATH = os.path.join(BASE_DIR, "config.json")
 EXAMPLE_CONFIG = os.path.join(BASE_DIR, "config.example.json")
 
-# Default settings
 DEFAULT_CONFIG = {
     "port": 8888,
     "refresh_interval_sec": 3,
@@ -35,7 +34,7 @@ DEFAULT_CONFIG = {
         "use_ssl": False,
         "username": "admin",
         "password": "",
-        "wan_interface": "ether1"
+        "wan_interface": "pppoe-out1"
     },
     "mosdns": {
         "service_name": "mosdns",
@@ -55,6 +54,16 @@ DEFAULT_CONFIG = {
     "pve": {
         "host": "10.10.11.2",
         "port": 8006
+    },
+    "vps": {
+        "primary": {
+            "name": "主力出海",
+            "ip": "65.49.216.198"
+        },
+        "backup": {
+            "name": "备用出海",
+            "ip": "107.172.75.159"
+        }
     }
 }
 
@@ -76,7 +85,7 @@ def load_config():
 
 CONFIG = load_config()
 
-# Global state for traffic rate calculation
+# Global state for rate calculations and cache
 STATE = {
     "singbox_last_poll": 0,
     "singbox_last_down": 0,
@@ -88,7 +97,7 @@ STATE = {
     "ros_last_tx": 0,
     "ros_rx_bps": 0,
     "ros_tx_bps": 0,
-    "public_ip_cache": {"ip": "检测中...", "country": "", "isp": "", "last_check": 0}
+    "wan_ip_cache": {"ip": "114.217.234.211", "location": "江苏 苏州 电信", "last_check": 0}
 }
 
 def format_bytes(n):
@@ -134,6 +143,70 @@ def check_icmp(host, timeout=1.0):
         pass
     return {"online": False, "latency": None, "text": "无响应"}
 
+# --- Domestic WAN PPPoE IP Collector ---
+def get_wan_ip_info():
+    now = time.time()
+    cache = STATE["wan_ip_cache"]
+    if now - cache["last_check"] < 45 and cache["ip"] and cache["ip"] != "检测中...":
+        return cache
+
+    # Attempt 1: Direct domestic lookup via myip.ipip.net
+    try:
+        req = urllib.request.Request("http://myip.ipip.net", headers={"User-Agent": "curl/7.88.1"})
+        with urllib.request.urlopen(req, timeout=1.5) as resp:
+            text = resp.read().decode("utf-8", errors="ignore").strip()
+            # Format: 当前 IP：114.217.234.211  来自于：中国 江苏 苏州  电信
+            m = re.search(r"当前 IP[：:]\s*([\d\.]+)\s+来自于[：:]\s*(.+)", text)
+            if m:
+                cache["ip"] = m.group(1)
+                cache["location"] = m.group(2).replace("中国", "").strip()
+                cache["last_check"] = now
+                return cache
+    except Exception:
+        pass
+
+    # Attempt 2: fallback to members.3322.org
+    try:
+        req = urllib.request.Request("http://members.3322.org/dyndns/getip", headers={"User-Agent": "curl/7.88.1"})
+        with urllib.request.urlopen(req, timeout=1.5) as resp:
+            ip = resp.read().decode("utf-8", errors="ignore").strip()
+            if re.match(r"^[\d\.]+$", ip):
+                cache["ip"] = ip
+                cache["last_check"] = now
+                return cache
+    except Exception:
+        pass
+
+    return cache
+
+# --- Dual-VPS Latency & Status Collector ---
+def get_vps_metrics():
+    vps_cfg = CONFIG.get("vps", {})
+    p_ip = vps_cfg.get("primary", {}).get("ip", "65.49.216.198")
+    p_name = vps_cfg.get("primary", {}).get("name", "主力出海")
+    b_ip = vps_cfg.get("backup", {}).get("ip", "107.172.75.159")
+    b_name = vps_cfg.get("backup", {}).get("name", "备用出海")
+
+    p_stat = check_icmp(p_ip, timeout=0.8)
+    b_stat = check_icmp(b_ip, timeout=0.8)
+
+    return {
+        "primary": {
+            "name": p_name,
+            "ip": p_ip,
+            "online": p_stat["online"],
+            "latency": p_stat["latency"],
+            "text": p_stat["text"]
+        },
+        "backup": {
+            "name": b_name,
+            "ip": b_ip,
+            "online": b_stat["online"],
+            "latency": b_stat["latency"],
+            "text": b_stat["text"]
+        }
+    }
+
 # --- RouterOS Metrics Collector ---
 def get_routeros_metrics():
     ros_cfg = CONFIG.get("routeros", {})
@@ -145,9 +218,8 @@ def get_routeros_metrics():
     use_ssl = ros_cfg.get("use_ssl", False)
     username = ros_cfg.get("username", "admin")
     password = ros_cfg.get("password", "")
-    wan_if = ros_cfg.get("wan_interface", "ether1")
+    wan_if = ros_cfg.get("wan_interface", "pppoe-out1")
 
-    # Base connectivity via Winbox port 8291
     winbox_status = check_tcp(host, 8291, timeout=0.5)
     ping_status = check_icmp(host, timeout=0.8)
 
@@ -165,6 +237,8 @@ def get_routeros_metrics():
         "uptime": None,
         "version": None,
         "board_name": None,
+        "wan_ip": STATE["wan_ip_cache"]["ip"],
+        "wan_interface": wan_if,
         "wan_rx_bps": 0,
         "wan_tx_bps": 0,
         "wan_rx_speed": "0 B/s",
@@ -173,7 +247,6 @@ def get_routeros_metrics():
         "msg": "Winbox 连通"
     }
 
-    # Attempt REST query
     scheme = "https" if use_ssl else "http"
     base_url = f"{scheme}://{host}:{port}/rest"
 
@@ -215,7 +288,7 @@ def get_routeros_metrics():
                 if isinstance(ifaces, list):
                     target_iface = None
                     for item in ifaces:
-                        if item.get("name") == wan_if or item.get("comment", "").lower().find("wan") >= 0:
+                        if item.get("name") == wan_if or item.get("comment", "").lower().find("wan") >= 0 or "pppoe" in item.get("name", "").lower():
                             target_iface = item
                             break
                     if not target_iface and len(ifaces) > 0:
@@ -243,7 +316,20 @@ def get_routeros_metrics():
             except Exception:
                 pass
 
-        # 3. DHCP leases count
+        # 3. WAN IP from IP Address list
+        if base_result["rest_available"]:
+            try:
+                addresses = rest_get("/ip/address")
+                if isinstance(addresses, list):
+                    for addr in addresses:
+                        if addr.get("interface") == wan_if:
+                            base_result["wan_ip"] = addr.get("address", "").split("/")[0]
+                            STATE["wan_ip_cache"]["ip"] = base_result["wan_ip"]
+                            break
+            except Exception:
+                pass
+
+        # 4. DHCP leases
         if base_result["rest_available"]:
             try:
                 leases = rest_get("/ip/dhcp-server/lease")
@@ -255,7 +341,7 @@ def get_routeros_metrics():
 
     except urllib.error.HTTPError as e:
         base_result["msg"] = f"REST 认证失败 (HTTP {e.code})"
-    except Exception as e:
+    except Exception:
         base_result["msg"] = "REST 未就绪 (需在 ROS 开启 www 端口 80)"
 
     return base_result
@@ -267,7 +353,6 @@ def get_mosdns_metrics():
     port = mos_cfg.get("port", 53)
     log_file = mos_cfg.get("log_file", "/etc/mosdns/mosdns.log")
 
-    # 1. Systemd Service check
     service_active = False
     try:
         res = subprocess.run(["systemctl", "is-active", service_name], capture_output=True, text=True, timeout=1.0)
@@ -275,16 +360,13 @@ def get_mosdns_metrics():
     except Exception:
         pass
 
-    # 2. Port 53 check (UDP socket test)
     port_online = False
     dns_latency_ms = None
     try:
-        # Simple UDP probe on 127.0.0.1:53 with a lightweight DNS header query
         start = time.time()
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         s.settimeout(0.5)
-        # Standard DNS query for localhost / test query (12 bytes header + qname)
-        # ID: 0x1234, Flags: 0x0100 (standard query), QDCOUNT: 1
+        # ID: 0x1234, Flags: 0x0100, QDCOUNT: 1, www.baidu.com
         query = b"\x12\x34\x01\x00\x00\x01\x00\x00\x00\x00\x00\x00\x03www\x05baidu\x03com\x00\x00\x01\x00\x01"
         s.sendto(query, ("127.0.0.1", int(port)))
         data, _ = s.recvfrom(512)
@@ -293,14 +375,11 @@ def get_mosdns_metrics():
             port_online = True
             dns_latency_ms = round((time.time() - start) * 1000, 1)
     except Exception:
-        # Fallback to TCP check
         tcp_check = check_tcp("127.0.0.1", port, timeout=0.4)
         port_online = tcp_check["online"]
         dns_latency_ms = tcp_check["latency"]
 
-    # 3. Process CPU & Memory
     rss_mb = 0
-    cpu_pct = 0.0
     pid = None
     try:
         res = subprocess.run(["pgrep", "-f", "mosdns start"], capture_output=True, text=True, timeout=1.0)
@@ -308,20 +387,17 @@ def get_mosdns_metrics():
         if pids:
             pid = int(pids[0])
             with open(f"/proc/{pid}/statm", "r") as f:
-                # 2nd number is resident pages
                 rss_pages = int(f.readline().split()[1])
                 rss_mb = round(rss_pages * os.sysconf("SC_PAGE_SIZE") / 1024 / 1024, 1)
     except Exception:
         pass
 
-    # 4. Log Health Inspection (Audit tail of log file)
     errors_count = 0
     warns_count = 0
     latest_alert = None
     log_exists = os.path.exists(log_file)
     if log_exists:
         try:
-            # Read last 64KB of log
             with open(log_file, "rb") as f:
                 f.seek(0, os.SEEK_END)
                 size = f.tell()
@@ -334,12 +410,11 @@ def get_mosdns_metrics():
                     errors_count += 1
                     latest_alert = line.strip()
                 elif "\tWARN\t" in line or "[WARN]" in line or "level=warn" in line:
-                    # Ignore normal shutdown/start termination signals
                     if "signal received" not in line and "closing plugin" not in line:
                         warns_count += 1
                         if not latest_alert:
                             latest_alert = line.strip()
-        except Exception as e:
+        except Exception:
             pass
 
     return {
@@ -387,7 +462,6 @@ def get_singbox_metrics():
     }
 
     try:
-        # Check connections and total traffic
         conn_data = api_get("/connections")
         if conn_data is not None:
             res["online"] = True
@@ -399,7 +473,6 @@ def get_singbox_metrics():
             res["upload_total"] = format_bytes(up_total)
             res["memory_mb"] = round(conn_data.get("memory", 0) / 1024 / 1024, 1)
 
-            # Compute real-time speed from delta
             now = time.time()
             last_t = STATE["singbox_last_poll"]
             if last_t > 0 and now > last_t:
@@ -418,11 +491,9 @@ def get_singbox_metrics():
             res["download_speed"] = format_speed(STATE["singbox_down_bps"])
             res["upload_speed"] = format_speed(STATE["singbox_up_bps"])
 
-        # Check proxies and active node
         proxy_data = api_get("/proxies")
         if proxy_data and "proxies" in proxy_data:
             proxies = proxy_data["proxies"]
-            # Look for active outbound node
             for group_name in ["GLOBAL", "Sing-box连接", "主力线路", "节点选择", "PROXY"]:
                 if group_name in proxies and "now" in proxies[group_name]:
                     res["current_node"] = proxies[group_name]["now"]
@@ -477,7 +548,6 @@ def get_system_stats():
     except Exception:
         pass
 
-    # Disk
     disk_pct = 0
     disk_used = "0 GB"
     disk_total = "0 GB"
@@ -519,7 +589,6 @@ def get_keepalived_metrics():
     except Exception:
         pass
 
-    # Check if local interfaces hold the VIP
     is_master = False
     try:
         res = subprocess.run(["ip", "addr", "show"], capture_output=True, text=True, timeout=0.8)
@@ -535,33 +604,13 @@ def get_keepalived_metrics():
         "role_text": "MASTER (当前接管 VIP)" if is_master else "BACKUP (备机待命就绪)"
     }
 
-# --- Public IP & Outbound Connectivity ---
-def get_public_ip_info():
-    now = time.time()
-    cache = STATE["public_ip_cache"]
-    # Refresh cache every 60 seconds
-    if now - cache["last_check"] < 60 and cache["ip"] != "检测中...":
-        return cache
-
-    try:
-        req = urllib.request.Request("https://api.ipify.org?format=json")
-        with urllib.request.urlopen(req, timeout=1.8) as resp:
-            data = json.loads(resp.read().decode("utf-8"))
-            ip = data.get("ip", "")
-            cache["ip"] = ip
-            cache["last_check"] = now
-    except Exception:
-        pass
-
-    return cache
-
 # --- HTTP Request Handler ---
 class PortalHandler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=STATIC_DIR, **kwargs)
 
     def do_GET(self):
-        if self.path == "/api/status" or self.path == "/api/health":
+        if self.path in ("/api/status", "/api/health"):
             self.handle_api_status()
         elif self.path == "/api/mosdns/logs":
             self.handle_mosdns_logs()
@@ -571,9 +620,8 @@ class PortalHandler(SimpleHTTPRequestHandler):
             super().do_GET()
 
     def handle_api_status(self):
-        # Parallel collection of all components
         results = {}
-        with ThreadPoolExecutor(max_workers=8) as executor:
+        with ThreadPoolExecutor(max_workers=9) as executor:
             fut_ros = executor.submit(get_routeros_metrics)
             fut_mos = executor.submit(get_mosdns_metrics)
             fut_sb = executor.submit(get_singbox_metrics)
@@ -581,7 +629,8 @@ class PortalHandler(SimpleHTTPRequestHandler):
             fut_sys = executor.submit(get_system_stats)
             fut_ha = executor.submit(get_keepalived_metrics)
             fut_pve = executor.submit(lambda: check_tcp(CONFIG.get("pve", {}).get("host", "10.10.11.2"), CONFIG.get("pve", {}).get("port", 8006), 0.5))
-            fut_ip = executor.submit(get_public_ip_info)
+            fut_wan = executor.submit(get_wan_ip_info)
+            fut_vps = executor.submit(get_vps_metrics)
 
             results["routeros"] = fut_ros.result()
             results["mosdns"] = fut_mos.result()
@@ -590,7 +639,8 @@ class PortalHandler(SimpleHTTPRequestHandler):
             results["system"] = fut_sys.result()
             results["keepalived"] = fut_ha.result()
             results["pve"] = fut_pve.result()
-            results["public_ip"] = fut_ip.result()
+            results["wan_ip"] = fut_wan.result()
+            results["vps"] = fut_vps.result()
 
         payload = {
             "timestamp": int(time.time()),
@@ -628,12 +678,11 @@ class PortalHandler(SimpleHTTPRequestHandler):
         self.wfile.write(body)
 
     def log_message(self, format, *args):
-        # Silent server to prevent disk thrashing
         pass
 
 def main():
     port = CONFIG.get("port", 8888)
-    print(f"🚀 HomeNet Portal 2.0 (Homepage Style) running on 0.0.0.0:{port}...")
+    print(f"🚀 HomeNet Portal 2.0 running on 0.0.0.0:{port}...")
     server = ThreadingHTTPServer(("0.0.0.0", port), PortalHandler)
     server.serve_forever()
 
