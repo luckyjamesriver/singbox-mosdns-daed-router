@@ -97,7 +97,11 @@ STATE = {
     "ros_last_tx": 0,
     "ros_rx_bps": 0,
     "ros_tx_bps": 0,
-    "wan_ip_cache": {"ip": "114.217.234.211", "location": "江苏 苏州 电信", "last_check": 0}
+    "wan_ip_cache": {"ip": "114.217.234.211", "location": "江苏 苏州 电信", "last_check": 0},
+    "vps_cache": {
+        "primary": {"online": True, "latency": 178.5, "text": "178.5 ms", "last_check": 0},
+        "backup": {"online": True, "latency": 215.0, "text": "215.0 ms", "last_check": 0}
+    }
 }
 
 def format_bytes(n):
@@ -127,7 +131,7 @@ def check_tcp(host, port, timeout=0.8):
     except Exception:
         return {"online": False, "latency": None, "text": "连接超时"}
 
-def check_icmp(host, timeout=1.0):
+def check_icmp(host, timeout=1.2):
     try:
         res = subprocess.run(
             ["ping", "-c", "1", "-W", "1", host],
@@ -187,23 +191,38 @@ def get_vps_metrics():
     b_ip = vps_cfg.get("backup", {}).get("ip", "107.172.75.159")
     b_name = vps_cfg.get("backup", {}).get("name", "备用出海")
 
-    p_stat = check_icmp(p_ip, timeout=0.8)
-    b_stat = check_icmp(b_ip, timeout=0.8)
+    now = time.time()
+    cache = STATE["vps_cache"]
+    if now - cache["primary"]["last_check"] >= 8:
+        p_stat = check_icmp(p_ip, timeout=1.2)
+        cache["primary"]["online"] = p_stat["online"]
+        if p_stat["online"]:
+            cache["primary"]["latency"] = p_stat["latency"]
+            cache["primary"]["text"] = p_stat["text"]
+        cache["primary"]["last_check"] = now
+
+    if now - cache["backup"]["last_check"] >= 8:
+        b_stat = check_icmp(b_ip, timeout=1.2)
+        cache["backup"]["online"] = b_stat["online"]
+        if b_stat["online"]:
+            cache["backup"]["latency"] = b_stat["latency"]
+            cache["backup"]["text"] = b_stat["text"]
+        cache["backup"]["last_check"] = now
 
     return {
         "primary": {
             "name": p_name,
             "ip": p_ip,
-            "online": p_stat["online"],
-            "latency": p_stat["latency"],
-            "text": p_stat["text"]
+            "online": cache["primary"]["online"],
+            "latency": cache["primary"].get("latency"),
+            "text": cache["primary"].get("text", "-- ms")
         },
         "backup": {
             "name": b_name,
             "ip": b_ip,
-            "online": b_stat["online"],
-            "latency": b_stat["latency"],
-            "text": b_stat["text"]
+            "online": cache["backup"]["online"],
+            "latency": cache["backup"].get("latency"),
+            "text": cache["backup"].get("text", "-- ms")
         }
     }
 
