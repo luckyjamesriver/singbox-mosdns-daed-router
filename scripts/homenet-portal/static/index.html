@@ -802,10 +802,9 @@
           </div>
         </div>
 
-        <div class="card-footer" style="display:flex; gap:0.4rem; align-items:center;">
-          <a class="btn btn-primary" href="http://10.10.11.1" target="_blank" style="flex:1;">WebFig 网页后台</a>
-          <button class="btn" onclick="handleWinboxClick('10.10.11.1')" style="flex:1;">唤起 Winbox</button>
-          <button class="btn" onclick="openWinboxHelp()" title="Winbox 唤起指南" style="padding:0.45rem 0.65rem; font-weight:600;">?</button>
+        <div class="card-footer">
+          <a class="btn btn-primary" href="http://10.10.11.1" target="_blank">WebFig 网页后台</a>
+          <button class="btn" onclick="copyIp('10.10.11.1')">复制 IP: 10.10.11.1</button>
         </div>
       </div>
 
@@ -1022,31 +1021,6 @@
         <button class="modal-close" onclick="closeMosdnsLogs()">&times;</button>
       </div>
       <div class="modal-body" id="modal-log-body">正在载入日志...</div>
-    </div>
-  </div>
-
-  <!-- Modal for Winbox Help -->
-  <div class="modal" id="modal-winbox-help">
-    <div class="modal-box" style="max-width: 620px;">
-      <div class="modal-head">
-        <div style="font-weight:600; font-size:0.92rem; font-family:var(--font-mono)">🖥️ Winbox 客户端唤起指南</div>
-        <button class="modal-close" onclick="closeWinboxHelp()">&times;</button>
-      </div>
-      <div class="modal-body" style="font-family:inherit; font-size:0.83rem; line-height:1.7; background:var(--surface); color:var(--text); white-space:normal;">
-        <p style="margin-bottom:0.75rem;"><strong>1. 为什么点击唤起曾提示“用户密码不正确”？</strong><br>
-        WinBox 4 的命令行机制（<code>WinBox IP 用户名 密码</code>）在未附带密码启动时，会强制向 RouterOS 发送“空密码”，导致界面密码框被清空并报错。现已全面优化为纯净激活 WinBox，让客户端直接加载本地 Saved 保存凭据登录！</p>
-        
-        <p style="margin-bottom:0.75rem;"><strong>2. 解决方案 A：免安装 WebFig（最推荐）</strong><br>
-        直接点击左侧深绿色「<strong>WebFig 网页后台</strong>」，RouterOS 原生网页界面功能与 Winbox 几乎完全一致，无需任何本地客户端即可全功能免密/快速管理。</p>
-
-        <p style="margin-bottom:0.75rem;"><strong>3. 解决方案 B：Mac 用户正确连接方式</strong><br>
-        点击按钮唤醒 WinBox 4 客户端后：<br>
-        • 在下方 <strong>Saved (已保存)</strong> 列表中直接<strong>双击 <code>10.10.11.1</code></strong> 即可带密码自动秒登！<br>
-        • 或在 Password 框中手动输入您的 RouterOS 密码后点击 Connect。</p>
-
-        <p style="margin-bottom:0.35rem;"><strong>4. 解决方案 C：Windows 用户</strong><br>
-        在 WinBox 主界面的 <strong>Connect To</strong> 中粘贴剪贴板内的 <code>10.10.11.1</code>，选择已存密码登录即可。</p>
-      </div>
     </div>
   </div>
 
@@ -1316,26 +1290,11 @@
       }, duration);
     }
 
-    function handleWinboxClick(ip) {
+    function copyIp(ip) {
       if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(ip).catch(() => {});
       }
-      showToast(`⚡ 已唤醒 WinBox 客户端并复制 IP (${ip})！在 Saved 保存列表中双击即可连接。`);
-      
-      const link = document.createElement('a');
-      link.href = `winbox://${ip}`;
-      link.style.display = 'none';
-      document.body.appendChild(link);
-      link.click();
-      setTimeout(() => link.remove(), 1000);
-    }
-
-    function openWinboxHelp() {
-      document.getElementById('modal-winbox-help').style.display = 'flex';
-    }
-
-    function closeWinboxHelp() {
-      document.getElementById('modal-winbox-help').style.display = 'none';
+      showToast(`已将 ${ip} 复制至剪贴板`);
     }
 
     fetchStatus();

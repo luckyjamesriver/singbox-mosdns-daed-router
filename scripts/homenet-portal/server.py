@@ -266,6 +266,10 @@ def get_routeros_metrics():
         "msg": "Winbox 连通"
     }
 
+    if not password:
+        # If password is empty, do not send unauthorized REST requests to RouterOS
+        return base_result
+
     scheme = "https" if use_ssl else "http"
     base_url = f"{scheme}://{host}:{port}/rest"
 
