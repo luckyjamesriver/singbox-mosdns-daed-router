@@ -644,6 +644,37 @@
       padding: 0.2rem;
     }
 
+    /* Toast Notification System */
+    .toast-container {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10000;
+      pointer-events: none;
+    }
+    .toast-message {
+      background: var(--surface);
+      color: var(--text);
+      border: 1px solid var(--accent);
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+      padding: 0.65rem 1.25rem;
+      border-radius: var(--radius-control);
+      font-size: 0.82rem;
+      font-weight: 500;
+      opacity: 0;
+      transform: translateY(12px);
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      max-width: 90vw;
+    }
+    .toast-message.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
     footer {
       text-align: center;
       padding: 1.5rem;
@@ -771,9 +802,10 @@
           </div>
         </div>
 
-        <div class="card-footer">
-          <a class="btn btn-primary" href="http://10.10.11.1" target="_blank">WebFig 网页后台</a>
-          <a class="btn" href="winbox://10.10.11.1">唤起 Winbox 客户端</a>
+        <div class="card-footer" style="display:flex; gap:0.4rem; align-items:center;">
+          <a class="btn btn-primary" href="http://10.10.11.1" target="_blank" style="flex:1;">WebFig 网页后台</a>
+          <button class="btn" onclick="handleWinboxClick('10.10.11.1')" style="flex:1;">唤起 Winbox</button>
+          <button class="btn" onclick="openWinboxHelp()" title="Winbox 唤起指南" style="padding:0.45rem 0.65rem; font-weight:600;">?</button>
         </div>
       </div>
 
@@ -990,6 +1022,32 @@
         <button class="modal-close" onclick="closeMosdnsLogs()">&times;</button>
       </div>
       <div class="modal-body" id="modal-log-body">正在载入日志...</div>
+    </div>
+  </div>
+
+  <!-- Modal for Winbox Help -->
+  <div class="modal" id="modal-winbox-help">
+    <div class="modal-box" style="max-width: 620px;">
+      <div class="modal-head">
+        <div style="font-weight:600; font-size:0.92rem; font-family:var(--font-mono)">🖥️ Winbox 客户端唤起指南</div>
+        <button class="modal-close" onclick="closeWinboxHelp()">&times;</button>
+      </div>
+      <div class="modal-body" style="font-family:inherit; font-size:0.83rem; line-height:1.7; background:var(--surface); color:var(--text); white-space:normal;">
+        <p style="margin-bottom:0.75rem;"><strong>1. 为什么浏览器点击唤起可能无反应？</strong><br>
+        MikroTik 官方的 WinBox 客户端（特别是 macOS 版 WinBox 4 或未配置的 Windows）系统默认未注册 <code>winbox://</code> 协议，现代浏览器会默认拦截或提示未知协议。</p>
+        
+        <p style="margin-bottom:0.75rem;"><strong>2. 解决方案 A：免安装 WebFig（最推荐）</strong><br>
+        直接点击左侧深绿色「<strong>WebFig 网页后台</strong>」，RouterOS 原生网页界面功能与 Winbox 几乎完全一致，无需任何本地客户端即可全功能免密/快速管理。</p>
+
+        <p style="margin-bottom:0.75rem;"><strong>3. 解决方案 B：Mac 用户一键关联</strong><br>
+        点击按钮时系统已<strong>自动将 <code>10.10.11.1</code> 复制到剪贴板</strong>。如果在 Mac 上使用 WinBox 4，可通过运行仓库提供的轻量注册脚本一键激活浏览器协议唤起：<br>
+        <code style="display:block; margin-top:0.35rem; padding:0.4rem 0.6rem; background:var(--raised); border:1px solid var(--border); border-radius:4px; font-family:var(--font-mono); font-size:0.75rem;">bash /opt/homenet-portal/setup-mac-winbox.sh</code>
+        <span style="display:block; margin-top:0.25rem; color:var(--muted); font-size:0.74rem;">或在 Mac 终端直接执行：<code>open -a WinBox --args 10.10.11.1</code></span>
+        </p>
+
+        <p style="margin-bottom:0.35rem;"><strong>4. 解决方案 C：Windows 用户</strong><br>
+        在 WinBox 主界面的 <strong>Connect To</strong> 中粘贴剪贴板内的 <code>10.10.11.1</code>（默认端口 8291），输入账号密码即可登录。</p>
+      </div>
     </div>
   </div>
 
@@ -1240,6 +1298,45 @@
 
     function closeMosdnsLogs() {
       document.getElementById('modal-logs').style.display = 'none';
+    }
+
+    function showToast(msg, duration = 3500) {
+      let toast = document.getElementById('global-toast');
+      if (!toast) {
+        const container = document.createElement('div');
+        container.className = 'toast-container';
+        container.innerHTML = '<div class="toast-message" id="global-toast"></div>';
+        document.body.appendChild(container);
+        toast = document.getElementById('global-toast');
+      }
+      toast.innerText = msg;
+      toast.classList.add('show');
+      if (window._toastTimer) clearTimeout(window._toastTimer);
+      window._toastTimer = setTimeout(() => {
+        toast.classList.remove('show');
+      }, duration);
+    }
+
+    function handleWinboxClick(ip) {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(ip).catch(() => {});
+      }
+      showToast(`⚡ 正在尝试唤起 Winbox (${ip})！已自动复制 IP 至剪贴板。如未弹出请点击右侧「?」查看指南。`);
+      
+      const link = document.createElement('a');
+      link.href = `winbox://${ip}`;
+      link.style.display = 'none';
+      document.body.appendChild(link);
+      link.click();
+      setTimeout(() => link.remove(), 1000);
+    }
+
+    function openWinboxHelp() {
+      document.getElementById('modal-winbox-help').style.display = 'flex';
+    }
+
+    function closeWinboxHelp() {
+      document.getElementById('modal-winbox-help').style.display = 'none';
     }
 
     fetchStatus();
