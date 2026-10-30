@@ -890,7 +890,7 @@
 
         <div class="card-footer">
           <!-- Directly opens proxies view -->
-          <a class="btn btn-primary" href="http://10.10.11.8:9090/ui/#/proxies" target="_blank">节点选择面板 (#/proxies)</a>
+          <a class="btn btn-primary" id="sb-proxies-link" href="http://10.10.11.8:9090/ui/#/proxies" target="_blank">节点选择面板 (#/proxies)</a>
         </div>
       </div>
 
@@ -911,7 +911,7 @@
           <div class="metrics-table">
             <div class="metric-row">
               <span class="metric-label">WebUI 端点</span>
-              <span class="metric-value num">http://10.10.11.8:2023</span>
+              <span class="metric-value num" id="daed-endpoint-text">http://10.10.11.8:2023</span>
             </div>
             <div class="metric-row">
               <span class="metric-label">连接探针延时</span>
@@ -929,7 +929,7 @@
         </div>
 
         <div class="card-footer">
-          <a class="btn btn-primary" href="http://10.10.11.8:2023" target="_blank">打开 daed 控制台</a>
+          <a class="btn btn-primary" id="daed-ui-link" href="http://10.10.11.8:2023" target="_blank">打开 daed 控制台</a>
         </div>
       </div>
 
@@ -939,7 +939,7 @@
           <div class="card-head">
             <div class="card-title-box">
               <h2>Debian 旁路由底座</h2>
-              <p>系统宿主与高可用集群 (10.10.11.8)</p>
+              <p id="host-sub-text">系统宿主与高可用集群</p>
             </div>
             <div id="ha-badge" class="status-pill pill-positive">
               <span class="pulse-dot pulse-green"></span>
@@ -1059,6 +1059,20 @@
     }
 
     applyTheme(savedTheme);
+
+    // Dynamic Host Links & Titles
+    function initDynamicHostLinks() {
+      const h = window.location.hostname || '127.0.0.1';
+      const sbLink = document.getElementById('sb-proxies-link');
+      if (sbLink) sbLink.href = `http://${h}:9090/ui/#/proxies`;
+      const daedLink = document.getElementById('daed-ui-link');
+      if (daedLink) daedLink.href = `http://${h}:2023`;
+      const daedEp = document.getElementById('daed-endpoint-text');
+      if (daedEp) daedEp.innerText = `http://${h}:2023`;
+      const hostSub = document.getElementById('host-sub-text');
+      if (hostSub) hostSub.innerText = `系统宿主与高可用集群 (${h})`;
+    }
+    initDynamicHostLinks();
 
     // Live Data Polling
     async function fetchStatus() {
