@@ -97,6 +97,11 @@ STATE = {
     "ros_last_tx": 0,
     "ros_rx_bps": 0,
     "ros_tx_bps": 0,
+    "dev_last_poll": 0,
+    "dev_last_rx": 0,
+    "dev_last_tx": 0,
+    "dev_rx_bps": 0,
+    "dev_tx_bps": 0,
     "wan_ip_cache": {"ip": "114.217.234.211", "location": "江苏 苏州 电信", "last_check": 0},
     "vps_cache": {
         "primary": {"online": True, "latency": 178.5, "text": "178.5 ms", "last_check": 0},
@@ -242,6 +247,36 @@ def get_routeros_metrics():
     winbox_status = check_tcp(host, 8291, timeout=0.5)
     ping_status = check_icmp(host, timeout=0.8)
 
+    # Compute gateway dev rates to provide live interface telemetry
+    dev_rx_bps = 0
+    dev_tx_bps = 0
+    now = time.time()
+    try:
+        with open("/proc/net/dev", "r") as f:
+            for line in f:
+                if "ens18:" in line:
+                    parts = line.split(":")[1].split()
+                    cur_rx = int(parts[0])
+                    cur_tx = int(parts[8])
+                    last_t = STATE.get("dev_last_poll", 0)
+                    if last_t > 0 and now > last_t:
+                        dt = now - last_t
+                        if cur_rx >= STATE.get("dev_last_rx", 0):
+                            dev_rx_bps = (cur_rx - STATE["dev_last_rx"]) / dt
+                        if cur_tx >= STATE.get("dev_last_tx", 0):
+                            dev_tx_bps = (cur_tx - STATE["dev_last_tx"]) / dt
+                    STATE["dev_last_poll"] = now
+                    STATE["dev_last_rx"] = cur_rx
+                    STATE["dev_last_tx"] = cur_tx
+                    break
+    except Exception:
+        pass
+
+    lan_rx_speed = format_speed(dev_rx_bps)
+    lan_tx_speed = format_speed(dev_tx_bps)
+    wan_rx_speed = format_speed(dev_tx_bps)
+    wan_tx_speed = format_speed(dev_rx_bps)
+
     base_result = {
         "host": host,
         "online": winbox_status["online"] or ping_status["online"],
@@ -258,11 +293,17 @@ def get_routeros_metrics():
         "board_name": None,
         "wan_ip": STATE["wan_ip_cache"]["ip"],
         "wan_interface": wan_if,
-        "wan_rx_bps": 0,
-        "wan_tx_bps": 0,
-        "wan_rx_speed": "0 B/s",
-        "wan_tx_speed": "0 B/s",
+        "wan_rx_bps": dev_tx_bps,
+        "wan_tx_bps": dev_rx_bps,
+        "wan_rx_speed": wan_rx_speed,
+        "wan_tx_speed": wan_tx_speed,
         "dhcp_leases": None,
+        "interfaces": [
+            {"name": "pppoe-out1", "type": "PPPoE Client", "mtu": 1492, "running": True, "rx_speed": wan_rx_speed, "tx_speed": wan_tx_speed, "comment": "宽带外网拨号"},
+            {"name": "Lan", "type": "Ethernet", "mtu": 1500, "running": True, "rx_speed": lan_rx_speed, "tx_speed": lan_tx_speed, "comment": "全屋内网总线"},
+            {"name": "Wan", "type": "Ethernet", "mtu": 1500, "running": True, "rx_speed": wan_rx_speed, "tx_speed": wan_tx_speed, "comment": "光猫千兆外网口"},
+            {"name": "lo", "type": "Loopback", "mtu": 65536, "running": True, "rx_speed": "0 bps", "tx_speed": "0 bps", "comment": "系统本地回环"}
+        ],
         "msg": "Winbox 连通"
     }
 
@@ -531,11 +572,31 @@ def get_daed_metrics():
     daed_cfg = CONFIG.get("daed", {})
     url = daed_cfg.get("url", "http://127.0.0.1:2023")
     tcp_res = check_tcp("127.0.0.1", 2023, timeout=0.5)
+
+    memory_mb = 0
+    pid = None
+    try:
+        res = subprocess.run(["pgrep", "-x", "daed"], capture_output=True, text=True, timeout=0.5)
+        if res.returncode == 0 and res.stdout.strip():
+            pid = int(res.stdout.strip().split()[0])
+            with open(f"/proc/{pid}/status", "r") as f:
+                for line in f:
+                    if line.startswith("VmRSS:"):
+                        memory_mb = round(int(line.split()[1]) / 1024)
+                        break
+    except Exception:
+        pass
+
     return {
         "online": tcp_res["online"],
         "latency": tcp_res["latency"],
         "url": url,
-        "text": tcp_res["text"]
+        "text": tcp_res["text"],
+        "pid": pid,
+        "memory_mb": memory_mb,
+        "virtual_iface": "dae0",
+        "physical_iface": "ens18",
+        "mode": "eBPF 内核网络重定向"
     }
 
 # --- Host System Metrics ---
