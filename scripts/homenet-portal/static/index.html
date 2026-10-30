@@ -256,8 +256,7 @@
     }
 
     ::selection {
-      background: rgba(44, 95, 74, 0.16);
-      color: var(--text);
+      background: rgba(44, 95, 74, 0.2);
     }
 
     :focus-visible {
@@ -861,6 +860,12 @@
       color: var(--code-ink);
       white-space: pre-wrap;
       word-break: break-all;
+    }
+
+    .modal-body::selection,
+    .modal-body *::selection {
+      background: #1c523b;
+      color: #ffffff;
     }
 
     .modal-close {
