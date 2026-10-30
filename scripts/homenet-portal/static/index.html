@@ -868,6 +868,35 @@
       color: #ffffff;
     }
 
+    .modal-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .modal-copy-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 10px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text);
+      background: var(--raised);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-control);
+      cursor: pointer;
+      transition: all 0.15s var(--ease);
+      font-family: inherit;
+      line-height: 1.4;
+    }
+
+    .modal-copy-btn:hover {
+      background: var(--active);
+      border-color: var(--control);
+      color: var(--accent);
+    }
+
     .modal-close {
       cursor: pointer;
       background: none;
@@ -1294,7 +1323,10 @@
     <div class="modal-box">
       <div class="modal-head">
         <div class="modal-title">MosDNS 运行日志 · 最近 60 条</div>
-        <button class="modal-close" onclick="closeMosdnsLogs()">&times;</button>
+        <div class="modal-actions">
+          <button class="modal-copy-btn" id="btn-copy-logs" onclick="copyMosdnsLogs()">📋 复制全部日志</button>
+          <button class="modal-close" onclick="closeMosdnsLogs()">&times;</button>
+        </div>
       </div>
       <div class="modal-body" id="modal-log-body">正在载入日志...</div>
     </div>
@@ -1577,6 +1609,63 @@
     function closeMosdnsLogs() {
       document.getElementById('modal-logs').style.display = 'none';
     }
+
+    function copyMosdnsLogs() {
+      const body = document.getElementById('modal-log-body');
+      if (!body) return;
+      const text = body.innerText || '';
+      if (!text || text === '正在载入运行日志...' || text === '暂无日志记录') {
+        showToast('暂无日志可复制');
+        return;
+      }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(() => {
+          showToast('已复制全部 60 条日志至剪贴板');
+        }).catch(() => {
+          fallbackCopyText(text);
+        });
+      } else {
+        fallbackCopyText(text);
+      }
+    }
+
+    function fallbackCopyText(text) {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.left = '-9999px';
+      document.body.appendChild(ta);
+      ta.select();
+      try {
+        document.execCommand('copy');
+        showToast('已复制全部 60 条日志至剪贴板');
+      } catch (_) {
+        showToast('复制失败，请手动划选');
+      }
+      document.body.removeChild(ta);
+    }
+
+    // 键盘辅助：当弹窗开启时，按 Ctrl+A / Cmd+A 仅全选日志区域，按 Esc 关闭弹窗
+    document.addEventListener('keydown', function(e) {
+      const modal = document.getElementById('modal-logs');
+      if (modal && modal.style.display === 'flex') {
+        if (e.key === 'Escape') {
+          closeMosdnsLogs();
+          return;
+        }
+        if ((e.ctrlKey || e.metaKey) && (e.key === 'a' || e.key === 'A')) {
+          const body = document.getElementById('modal-log-body');
+          if (body) {
+            e.preventDefault();
+            const range = document.createRange();
+            range.selectNodeContents(body);
+            const sel = window.getSelection();
+            sel.removeAllRanges();
+            sel.addRange(range);
+          }
+        }
+      }
+    });
 
     function showToast(msg, duration = 3500) {
       let toast = document.getElementById('global-toast');
