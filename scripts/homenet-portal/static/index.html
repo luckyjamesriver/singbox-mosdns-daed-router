@@ -7,10 +7,8 @@
   <meta name="color-scheme" content="light dark">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220%22%20width=%22100%22%20height=%22100%22><text y=%22.9em%22 font-size=%2290%22>🌐</text></svg>">
   
-  <!-- Web Fonts: IBM Plex Sans & IBM Plex Mono for high-end DevTools typography -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <!-- 系统字体栈：不依赖外网字体，中文与数字都与系统同源 -->
+  <meta name="theme-color" content="#f4f2ec">
 
   <script>
     // Anti-FOUC Theme Initialization (default to light #F5F3ED)
@@ -24,161 +22,192 @@
 
   <style>
     /* ==========================================================================
-       Design System Tokens (Taste-Skill v2: Warm Alabaster #F5F3ED & Pine #3D755D)
+       HomeNet Portal · 视觉层
+       暖白纸面 + 松绿主色；系统字体栈，数字等宽；所有层级由字号/字色/间距建立。
+       令牌集中在此，改主题只改这里。
        ========================================================================== */
     :root {
-      /* Light Theme (Default: Ground #F5F3ED, Accent #3D755D) */
-      --ground: #f5f3ed;
+      color-scheme: light;
+
+      /* 面 */
+      --ground: #f4f3ee;
       --surface: #ffffff;
-      --raised: #ece8dc;
-      --active: #e2dcd0;
-      --border: #e2dbce;
-      --rule: #ece7dc;
-      --control: #c8c2b3;
+      --raised: #f7f5ef;
+      --active: #ede9de;
+      --border: #e3dfd4;
+      --rule: #eeeade;
+      --control: #c9c3b4;
+      --track: #e9e5da;
 
-      --text: #19211d;
-      --muted: #4e5a53;
-      --faint: #75837b;
+      /* 字 */
+      --text: #121815;
+      --muted: #46524b;
+      --faint: #6e7a72;
 
-      --accent: #3d755d;
-      --accent-subtle: rgba(61, 117, 93, 0.09);
-      --accent-border: rgba(61, 117, 93, 0.28);
+      /* 主色 */
+      --accent: #2c5f4a;
+      --accent-strong: #24503e;
+      --accent-subtle: rgba(44, 95, 74, 0.08);
+      --accent-border: rgba(44, 95, 74, 0.24);
 
-      --positive: #3d755d;
-      --pill-pos-bg: #e5ede8;
-      --pill-pos-ink: #204b39;
+      /* 语义状态 */
+      --positive: #2e6b4e;
+      --pill-pos-bg: #e7f0ea;
+      --pill-pos-ink: #1c4a35;
+      --pill-pos-border: #cfe1d6;
 
-      --negative: #dc2626;
-      --pill-neg-bg: #fee2e2;
-      --pill-neg-ink: #7f1d1d;
+      --warning: #8a5b10;
+      --pill-warn-bg: #f8edd3;
+      --pill-warn-ink: #77500f;
+      --pill-warn-border: #ebd9b0;
 
-      --warning: #d97706;
-      --pill-warn-bg: #fef3c7;
-      --pill-warn-ink: #78350f;
+      --negative: #a63a2e;
+      --pill-neg-bg: #fae8e4;
+      --pill-neg-ink: #8b3025;
+      --pill-neg-border: #efd2cc;
 
-      --pill-neutral-bg: #ece8dc;
-      --pill-neutral-ink: #334155;
+      --pill-neutral-bg: #efebe1;
+      --pill-neutral-ink: #41504a;
+      --pill-neutral-border: #e1dcd0;
 
-      --primary-btn-bg: #3d755d;
+      --primary-btn-bg: #2c5f4a;
+      --primary-btn-bg-hover: #275542;
       --primary-btn-ink: #ffffff;
+      --brand-ink: #ffffff;
 
-      --code-bg: #090d16;
-      --code-ink: #4ade80;
+      --code-bg: #0c1310;
+      --code-ink: #a8d8bc;
 
-      --radius-sheet: 14px;
-      --radius-card: 10px;
-      --radius-control: 6px;
-      --radius-pill: 6px;
+      --radius-card: 12px;
+      --radius-control: 8px;
+      --radius-pill: 7px;
 
-      --font-sans: "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+      --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI",
+                   "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei",
+                   "Noto Sans CJK SC", sans-serif;
+      --font-mono: ui-monospace, "SF Mono", "JetBrains Mono", "Cascadia Mono",
+                   Menlo, Consolas, "Liberation Mono", monospace;
+
+      --shadow-card: 0 1px 2px rgba(24, 32, 26, 0.05),
+                     0 10px 22px -18px rgba(24, 32, 26, 0.22);
+      --shadow-card-hover: 0 2px 4px rgba(24, 32, 26, 0.06),
+                           0 16px 30px -20px rgba(24, 32, 26, 0.3);
 
       --ease: cubic-bezier(0.2, 0, 0, 1);
     }
 
-    /* Auto Dark Mode */
+    /* 跟随系统 */
     @media (prefers-color-scheme: dark) {
       :root:not([data-theme="light"]) {
-        --ground: #0a110e;
-        --surface: #101915;
-        --raised: #16221d;
-        --active: #1d2c25;
-        --border: #1c2b24;
-        --rule: #17241e;
-        --control: #293d34;
+        color-scheme: dark;
+        --ground: #0a0f0c;
+        --surface: #111814;
+        --raised: #16201a;
+        --active: #1d2923;
+        --border: #25322b;
+        --rule: #1e2a24;
+        --control: #3a4a41;
+        --track: #1b2620;
 
-        --text: #f4f7f5;
-        --muted: #91a399;
-        --faint: #63766c;
+        --text: #f1f5f2;
+        --muted: #a9b7ad;
+        --faint: #7e8d84;
 
-        --accent: #4ea47f;
-        --accent-subtle: rgba(78, 164, 127, 0.12);
-        --accent-border: rgba(78, 164, 127, 0.35);
+        --accent: #5cae86;
+        --accent-strong: #74c39a;
+        --accent-subtle: rgba(92, 174, 134, 0.12);
+        --accent-border: rgba(92, 174, 134, 0.3);
 
-        --positive: #4ea47f;
-        --pill-pos-bg: #102b1e;
-        --pill-pos-ink: #65c599;
+        --positive: #5cae86;
+        --pill-pos-bg: #10301f;
+        --pill-pos-ink: #86d3ab;
+        --pill-pos-border: #1d4733;
 
-        --negative: #ef4444;
-        --pill-neg-bg: #450a0a;
-        --pill-neg-ink: #f87171;
+        --warning: #e5b45a;
+        --pill-warn-bg: #33240c;
+        --pill-warn-ink: #e9c77f;
+        --pill-warn-border: #4a3617;
 
-        --warning: #f59e0b;
-        --pill-warn-bg: #451a03;
-        --pill-warn-ink: #fbbf24;
+        --negative: #e8836f;
+        --pill-neg-bg: #38150f;
+        --pill-neg-ink: #f0a797;
+        --pill-neg-border: #54241b;
 
-        --pill-neutral-bg: #1c2b24;
-        --pill-neutral-ink: #cbd5e1;
+        --pill-neutral-bg: #1b2620;
+        --pill-neutral-ink: #c3cfc7;
+        --pill-neutral-border: #2a382f;
 
-        --primary-btn-bg: #3d755d;
+        --primary-btn-bg: #2f6a51;
+        --primary-btn-bg-hover: #3a7d60;
         --primary-btn-ink: #ffffff;
+        --brand-ink: #07130d;
 
-        --code-bg: #050810;
-        --code-ink: #86efac;
+        --code-bg: #060a08;
+        --code-ink: #8fd4ae;
+
+        --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.4),
+                       0 12px 24px -20px rgba(0, 0, 0, 0.9);
+        --shadow-card-hover: 0 2px 6px rgba(0, 0, 0, 0.45),
+                             0 18px 32px -22px rgba(0, 0, 0, 1);
       }
     }
 
-    /* Explicit Dark Mode */
+    /* 手动切深色 */
     [data-theme="dark"] {
-      --ground: #0a110e;
-      --surface: #101915;
-      --raised: #16221d;
-      --active: #1d2c25;
-      --border: #1c2b24;
-      --rule: #17241e;
-      --control: #293d34;
+      color-scheme: dark;
+      --ground: #0a0f0c;
+      --surface: #111814;
+      --raised: #16201a;
+      --active: #1d2923;
+      --border: #25322b;
+      --rule: #1e2a24;
+      --control: #3a4a41;
+      --track: #1b2620;
 
-      --text: #f4f7f5;
-      --muted: #91a399;
-      --faint: #63766c;
+      --text: #f1f5f2;
+      --muted: #a9b7ad;
+      --faint: #7e8d84;
 
-      --accent: #4ea47f;
-      --accent-subtle: rgba(78, 164, 127, 0.12);
-      --accent-border: rgba(78, 164, 127, 0.35);
+      --accent: #5cae86;
+      --accent-strong: #74c39a;
+      --accent-subtle: rgba(92, 174, 134, 0.12);
+      --accent-border: rgba(92, 174, 134, 0.3);
 
-      --positive: #4ea47f;
-      --pill-pos-bg: #102b1e;
-      --pill-pos-ink: #65c599;
+      --positive: #5cae86;
+      --pill-pos-bg: #10301f;
+      --pill-pos-ink: #86d3ab;
+      --pill-pos-border: #1d4733;
 
-      --negative: #ef4444;
-      --pill-neg-bg: #450a0a;
-      --pill-neg-ink: #f87171;
+      --warning: #e5b45a;
+      --pill-warn-bg: #33240c;
+      --pill-warn-ink: #e9c77f;
+      --pill-warn-border: #4a3617;
 
-      --warning: #f59e0b;
-      --pill-warn-bg: #451a03;
-      --pill-warn-ink: #fbbf24;
+      --negative: #e8836f;
+      --pill-neg-bg: #38150f;
+      --pill-neg-ink: #f0a797;
+      --pill-neg-border: #54241b;
 
-      --pill-neutral-bg: #1c2b24;
-      --pill-neutral-ink: #cbd5e1;
+      --pill-neutral-bg: #1b2620;
+      --pill-neutral-ink: #c3cfc7;
+      --pill-neutral-border: #2a382f;
 
-      --primary-btn-bg: #3d755d;
+      --primary-btn-bg: #2f6a51;
+      --primary-btn-bg-hover: #3a7d60;
       --primary-btn-ink: #ffffff;
+      --brand-ink: #07130d;
 
-      --code-bg: #050810;
-      --code-ink: #86efac;
-    }
-      --pill-pos-ink: #4ade80;
+      --code-bg: #060a08;
+      --code-ink: #8fd4ae;
 
-      --negative: #ef4444;
-      --pill-neg-bg: #450a0a;
-      --pill-neg-ink: #f87171;
-
-      --warning: #f59e0b;
-      --pill-warn-bg: #451a03;
-      --pill-warn-ink: #fbbf24;
-
-      --pill-neutral-bg: #1a2336;
-      --pill-neutral-ink: #cbd5e1;
-
-      --primary-btn-bg: #f8fafc;
-      --primary-btn-ink: #080c14;
-
-      --code-bg: #050810;
-      --code-ink: #86efac;
+      --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.4),
+                     0 12px 24px -20px rgba(0, 0, 0, 0.9);
+      --shadow-card-hover: 0 2px 6px rgba(0, 0, 0, 0.45),
+                           0 18px 32px -22px rgba(0, 0, 0, 1);
     }
 
     /* ==========================================================================
-       Reset & Base Styles
+       基础
        ========================================================================== */
     *, *::before, *::after {
       box-sizing: border-box;
@@ -186,29 +215,66 @@
       padding: 0;
     }
 
+    html { -webkit-text-size-adjust: 100%; }
+
     html, body {
       min-height: 100vh;
       background-color: var(--ground);
       color: var(--text);
       font-family: var(--font-sans);
       font-size: 14px;
-      line-height: 1.5;
+      line-height: 1.55;
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
+      text-rendering: optimizeLegibility;
     }
 
     body {
       display: flex;
       flex-direction: column;
+      font-feature-settings: "kern" 1;
     }
 
-    .num {
-      font-family: var(--font-mono);
+    /* 所有数字默认等宽，列与列才能对齐 */
+    .num,
+    .metric-value,
+    .pipeline-val,
+    .refresh-badge {
       font-variant-numeric: tabular-nums;
+      font-feature-settings: "tnum" 1;
+    }
+
+    /* 只有真正的机器串才用等宽：IP、端点、日志、页脚 */
+    #hdr-wan-ip,
+    #vps-p-ip,
+    #vps-b-ip,
+    #daed-endpoint-text,
+    .brand-titles p,
+    .modal-body,
+    footer {
+      font-family: var(--font-mono);
+    }
+
+    ::selection {
+      background: rgba(44, 95, 74, 0.16);
+      color: var(--text);
+    }
+
+    :focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+      border-radius: 4px;
+    }
+
+    .modal-body::-webkit-scrollbar { width: 10px; }
+    .modal-body::-webkit-scrollbar-thumb {
+      background: #2c3a32;
+      border: 3px solid var(--code-bg);
+      border-radius: 999px;
     }
 
     /* ==========================================================================
-       Header & Navigation Frame (Ultra-Slim 38px Compact Top Bar)
+       顶栏
        ========================================================================== */
     header {
       background: var(--surface);
@@ -216,113 +282,127 @@
       position: sticky;
       top: 0;
       z-index: 100;
-      padding: 0.35rem 1.5rem;
     }
 
     .header-inner {
-      max-width: 1440px;
+      max-width: 1920px;
       margin: 0 auto;
+      padding: 0 28px;
+      height: 64px;
       display: flex;
       flex-wrap: nowrap;
       align-items: center;
       justify-content: space-between;
-      gap: 0.75rem;
-      min-height: 34px;
+      gap: 24px;
     }
 
-    /* Brand Block */
     .brand-group {
       display: flex;
       align-items: center;
-      gap: 0.55rem;
+      gap: 11px;
       flex-shrink: 0;
     }
 
     .brand-mark {
-      width: 26px;
-      height: 26px;
-      border-radius: 5px;
+      width: 34px;
+      height: 34px;
+      border-radius: 9px;
       background: var(--accent);
-      color: #ffffff;
+      color: var(--brand-ink);
       font-family: var(--font-mono);
-      font-weight: 700;
-      font-size: 0.82rem;
+      font-weight: 600;
+      font-size: 12.5px;
       display: flex;
       align-items: center;
       justify-content: center;
-      letter-spacing: -0.04em;
+      letter-spacing: 0.01em;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16);
     }
 
     .brand-titles {
       display: flex;
-      align-items: baseline;
-      gap: 0.45rem;
+      flex-direction: column;
+      justify-content: center;
+      gap: 1px;
     }
 
     .brand-titles h1 {
-      font-size: 0.95rem;
-      font-weight: 700;
-      letter-spacing: -0.02em;
-      line-height: 1;
+      font-size: 16.5px;
+      font-weight: 600;
+      letter-spacing: -0.012em;
+      line-height: 1.25;
       white-space: nowrap;
     }
 
     .brand-titles p {
-      font-size: 0.7rem;
-      color: var(--muted);
-      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--faint);
+      letter-spacing: 0.01em;
+      line-height: 1.35;
       white-space: nowrap;
     }
 
-    /* Egress Status Bar (Three Pipelines) */
+    /* 出口管线 */
     .egress-bar {
       display: flex;
       align-items: center;
-      gap: 0.4rem;
+      gap: 8px;
       flex-wrap: nowrap;
       overflow-x: auto;
       scrollbar-width: none;
+      margin: 0 auto;
     }
     .egress-bar::-webkit-scrollbar { display: none; }
 
     .pipeline-cell {
       display: flex;
       align-items: center;
-      gap: 0.35rem;
-      padding: 0.2rem 0.55rem;
+      gap: 8px;
+      min-height: 38px;
+      padding: 9px 12px;
       background: var(--raised);
       border: 1px solid var(--border);
-      border-radius: 5px;
-      font-size: 0.75rem;
+      border-radius: 8px;
+      font-size: 12px;
       white-space: nowrap;
+      transition: border-color 0.15s var(--ease), background 0.15s var(--ease);
     }
+    .pipeline-cell:hover { border-color: var(--control); }
 
     .pipeline-tag {
-      font-size: 0.68rem;
-      font-weight: 600;
-      color: var(--muted);
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--faint);
+      letter-spacing: 0.01em;
     }
 
     .pipeline-val {
       font-weight: 600;
       color: var(--text);
+      font-size: 12px;
     }
 
     .pulse-dot {
-      width: 6px;
-      height: 6px;
+      width: 7px;
+      height: 7px;
       border-radius: 50%;
       display: inline-block;
       flex-shrink: 0;
     }
-    .pulse-green { background: var(--positive); box-shadow: 0 0 5px rgba(61, 117, 93, 0.4); }
-    .pulse-red { background: var(--negative); box-shadow: 0 0 5px rgba(239, 68, 68, 0.4); }
+    .pulse-green {
+      background: var(--positive);
+      box-shadow: 0 0 0 3px rgba(46, 107, 78, 0.14);
+    }
+    .pulse-red {
+      background: var(--negative);
+      box-shadow: 0 0 0 3px rgba(166, 58, 46, 0.14);
+    }
 
-    /* Theme & Controls */
+    /* 控件 */
     .controls-group {
       display: flex;
       align-items: center;
-      gap: 0.45rem;
+      gap: 8px;
       flex-shrink: 0;
     }
 
@@ -330,155 +410,237 @@
       display: inline-flex;
       background: var(--raised);
       border: 1px solid var(--border);
-      border-radius: 5px;
-      padding: 1px;
+      border-radius: 8px;
+      padding: 3px;
+      gap: 2px;
     }
 
     .theme-opt {
       border: none;
       background: transparent;
-      color: var(--muted);
+      color: var(--faint);
       cursor: pointer;
-      padding: 0.18rem 0.45rem;
-      border-radius: 4px;
-      font-size: 0.73rem;
+      height: 26px;
+      padding: 0 10px;
+      border-radius: 6px;
+      font-family: inherit;
+      font-size: 12px;
       font-weight: 500;
-      transition: all 0.15s var(--ease);
+      letter-spacing: 0.01em;
+      transition: color 0.15s var(--ease), background 0.15s var(--ease);
       white-space: nowrap;
     }
+    .theme-opt:hover { color: var(--muted); }
 
     .theme-opt.active {
       background: var(--surface);
       color: var(--text);
       font-weight: 600;
-      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+      box-shadow: 0 1px 2px rgba(24, 32, 26, 0.08);
     }
 
     .refresh-badge {
-      font-size: 0.7rem;
-      font-family: var(--font-mono);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      height: 32px;
+      padding: 0 11px;
+      font-size: 12px;
       color: var(--faint);
-      padding: 0.18rem 0.45rem;
-      background: var(--raised);
+      background: transparent;
       border: 1px solid var(--border);
-      border-radius: 5px;
+      border-radius: 8px;
       white-space: nowrap;
+    }
+    .refresh-badge::before {
+      content: "";
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--accent);
+      opacity: 0.75;
     }
 
     /* ==========================================================================
-       Dashboard Layout & Cards
+       主体
        ========================================================================== */
     main {
       flex: 1;
-      max-width: 1440px;
       width: 100%;
+      max-width: 1920px;
       margin: 0 auto;
-      padding: 1.5rem 1.75rem;
+      padding: 24px 28px 4px;
     }
 
     .dashboard-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(390px, 1fr));
-      gap: 1.25rem;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 16px;
+      align-items: stretch;
+    }
+
+    @media (max-width: 1320px) {
+      .dashboard-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    }
+    @media (max-width: 1023px) {
+      .dashboard-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 820px) {
+      .dashboard-grid { grid-template-columns: 1fr; }
     }
 
     .card {
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: var(--radius-card);
-      padding: 1.25rem 1.4rem;
+      padding: 18px 18px 16px;
       display: flex;
       flex-direction: column;
-      justify-content: space-between;
       min-width: 0;
-      transition: border-color 0.15s var(--ease);
+      box-shadow: var(--shadow-card);
+      transition: box-shadow 0.18s var(--ease), border-color 0.18s var(--ease);
     }
 
     .card:hover {
       border-color: var(--control);
+      box-shadow: var(--shadow-card-hover);
     }
 
-    /* Card Header */
-    .card-head {
+    .card > div:first-child {
       display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      gap: 0.75rem;
-      margin-bottom: 1.1rem;
+      flex-direction: column;
+      flex: 1;
+      min-height: 0;
     }
 
+    /* 卡头 */
+    .card-head {
+      position: relative;
+      padding-bottom: 14px;
+      border-bottom: 1px solid var(--rule);
+    }
+
+    .card-title-box {
+      width: 100%;
+      min-width: 0;
+    }
+
+    /* 状态胶囊绝对定位：标题与副标题都能用满整卡宽度，不会被挤成两行 */
     .card-title-box h2 {
-      font-size: 1.02rem;
+      font-size: 16.5px;
       font-weight: 600;
-      letter-spacing: -0.01em;
+      letter-spacing: -0.008em;
       line-height: 1.3;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      padding-right: 142px;
     }
 
     .card-title-box p {
-      font-size: 0.76rem;
-      color: var(--muted);
-      margin-top: 0.15rem;
-      font-family: var(--font-mono);
+      font-size: 12.5px;
+      color: var(--faint);
+      margin-top: 3px;
+      font-weight: 400;
+      line-height: 1.4;
+      font-variant-numeric: tabular-nums;
     }
 
-    /* Status Pill */
+    /* 状态胶囊 */
     .status-pill {
       display: inline-flex;
       align-items: center;
-      gap: 0.35rem;
-      font-size: 0.73rem;
-      font-weight: 600;
-      padding: 0.22rem 0.55rem;
+      gap: 5px;
+      height: 24px;
+      padding: 0 8px;
       border-radius: var(--radius-pill);
+      border: 1px solid transparent;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.005em;
       white-space: nowrap;
+      flex-shrink: 0;
+      font-variant-numeric: tabular-nums;
+    }
+    .status-pill .pulse-dot {
+      width: 6px;
+      height: 6px;
+      box-shadow: none;
+    }
+
+    .card-head .status-pill {
+      position: absolute;
+      top: 0;
+      right: 0;
     }
 
     .pill-positive {
       background: var(--pill-pos-bg);
       color: var(--pill-pos-ink);
+      border-color: var(--pill-pos-border);
     }
-
     .pill-warning {
       background: var(--pill-warn-bg);
       color: var(--pill-warn-ink);
+      border-color: var(--pill-warn-border);
     }
-
     .pill-negative {
       background: var(--pill-neg-bg);
       color: var(--pill-neg-ink);
+      border-color: var(--pill-neg-border);
     }
-
     .pill-neutral {
       background: var(--pill-neutral-bg);
       color: var(--pill-neutral-ink);
+      border-color: var(--pill-neutral-border);
     }
 
-    /* Card Metrics Table */
+    /* 指标表 */
     .metrics-table {
-      margin-bottom: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      padding-top: 2px;
     }
 
     .metric-row {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 0.45rem 0;
+      gap: 10px;
+      padding: 9px 0;
       border-bottom: 1px solid var(--rule);
-      font-size: 0.84rem;
+      min-height: 36px;
     }
-
-    .metric-row:last-child {
-      border-bottom: none;
-    }
+    .metric-row:last-child { border-bottom: none; }
 
     .metric-label {
       color: var(--muted);
-      font-size: 0.8rem;
+      font-size: 13px;
+      font-weight: 400;
+      letter-spacing: 0.005em;
+      white-space: nowrap;
+      flex-shrink: 0;
     }
 
     .metric-value {
-      font-weight: 500;
+      font-weight: 600;
       color: var(--text);
+      font-size: 13.5px;
+      text-align: right;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      letter-spacing: -0.005em;
+      max-width: 62%;
+      line-height: 1.45;
+    }
+
+    .metric-value.compact {
+      font-size: 12.5px;
+      font-weight: 500;
+      letter-spacing: 0;
     }
 
     .metric-value.accent {
@@ -486,28 +648,43 @@
       font-weight: 600;
     }
 
-    /* Honest Thin Progress Bars */
+    /* 上下行箭头：CSS 三角，不依赖 emoji 字体 */
+    .arw {
+      display: inline-block;
+      width: 0;
+      height: 0;
+      border-left: 3.5px solid transparent;
+      border-right: 3.5px solid transparent;
+      vertical-align: 1.5px;
+      margin-right: 4px;
+    }
+    .arw.dn { border-top: 5px solid var(--positive); }
+    .arw.up { border-bottom: 5px solid var(--accent); }
+    .sep { color: var(--control); margin: 0 3px; }
+
+    /* 进度条 */
     .bar-track {
       width: 100%;
-      height: 4px;
-      background: var(--rule);
-      border-radius: 2px;
+      height: 5px;
+      background: var(--track);
+      border-radius: 999px;
       overflow: hidden;
-      margin-top: 0.3rem;
+      margin: 4px 0 6px;
+      box-shadow: inset 0 1px 1px rgba(24, 32, 26, 0.05);
     }
 
     .bar-fill {
       height: 100%;
-      background: var(--accent);
-      border-radius: 2px;
-      transition: width 0.3s var(--ease);
+      background: linear-gradient(180deg, #37755a, #2c5f4a);
+      border-radius: 999px;
+      transition: width 0.4s var(--ease);
     }
 
-    /* Actions */
+    /* 按钮 */
     .card-footer {
       display: flex;
-      gap: 0.6rem;
-      margin-top: auto;
+      gap: 8px;
+      margin-top: 16px;
     }
 
     .btn {
@@ -515,120 +692,171 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: 0.45rem;
-      height: 34px;
+      gap: 6px;
+      height: 40px;
       border-radius: var(--radius-control);
-      font-size: 0.82rem;
-      font-weight: 500;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.01em;
       text-decoration: none;
       cursor: pointer;
-      border: 1px solid var(--control);
-      background: var(--surface);
-      color: var(--text);
-      transition: all 0.12s var(--ease);
+      border: 1px solid transparent;
+      background: var(--primary-btn-bg);
+      color: var(--primary-btn-ink);
+      transition: background 0.15s var(--ease), box-shadow 0.15s var(--ease);
+      padding: 0 10px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1),
+                  0 1px 2px rgba(24, 32, 26, 0.16);
     }
 
-    .btn:hover {
-      background: var(--raised);
-      border-color: var(--text);
-    }
+    .btn:hover { background: var(--primary-btn-bg-hover); }
+    .btn:active { box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.18); }
 
     .btn-primary {
       background: var(--primary-btn-bg);
       color: var(--primary-btn-ink);
-      border-color: var(--primary-btn-bg);
+    }
+    .btn-primary:hover { background: var(--primary-btn-bg-hover); }
+
+    /* 告警 */
+    .soft-alert-box {
+      display: none;
+      margin-top: 9px;
+      padding: 8px 10px;
+      background: var(--pill-warn-bg);
+      border: 1px solid var(--pill-warn-border);
+      border-radius: 8px;
+      font-size: 11px;
+      line-height: 1.5;
+      color: var(--text);
+    }
+    .soft-alert-title {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-weight: 600;
+      color: var(--pill-warn-ink);
+      font-size: 11px;
+      margin-bottom: 3px;
+    }
+    .soft-alert-content {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      line-height: 1.55;
+      color: var(--muted);
+      word-break: normal;
+      overflow-wrap: anywhere;
     }
 
-    .btn-primary:hover {
-      opacity: 0.92;
-      background: var(--primary-btn-bg);
-    }
-
-    /* Diagnostic Tools Bar */
+    /* 工具条 */
     .tools-tray {
-      margin-top: 1.5rem;
+      margin-top: 16px;
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: var(--radius-card);
-      padding: 1.25rem 1.4rem;
+      padding: 16px 18px 18px;
+      box-shadow: var(--shadow-card);
     }
 
     .tray-title {
-      font-size: 0.76rem;
-      font-family: var(--font-mono);
+      font-size: 11px;
       font-weight: 600;
-      color: var(--muted);
+      color: var(--faint);
+      letter-spacing: 0.08em;
       text-transform: uppercase;
-      letter-spacing: 0.05em;
-      margin-bottom: 0.85rem;
+      margin-bottom: 12px;
     }
 
     .tray-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 0.75rem;
+      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+      gap: 10px;
     }
 
     .tray-link {
       display: flex;
       align-items: center;
-      gap: 0.5rem;
-      padding: 0.6rem 0.8rem;
+      gap: 9px;
+      height: 42px;
+      padding: 0 13px;
       border-radius: var(--radius-control);
       background: var(--raised);
       border: 1px solid var(--border);
       color: var(--text);
       text-decoration: none;
-      font-size: 0.82rem;
+      font-size: 13px;
       font-weight: 500;
-      transition: all 0.12s var(--ease);
+      letter-spacing: 0.01em;
+      transition: border-color 0.15s var(--ease), background 0.15s var(--ease),
+                  color 0.15s var(--ease);
+    }
+
+    .tray-link svg {
+      width: 16px;
+      height: 16px;
+      flex-shrink: 0;
+      color: var(--faint);
+      transition: color 0.15s var(--ease);
     }
 
     .tray-link:hover {
-      border-color: var(--control);
-      background: var(--active);
+      border-color: var(--accent-border);
+      background: var(--accent-subtle);
+      color: var(--accent-strong);
     }
+    .tray-link:hover svg { color: var(--accent); }
 
-    /* Log Modal */
+    /* 日志弹窗 */
     .modal {
       display: none;
       position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0, 0, 0, 0.7);
-      backdrop-filter: blur(8px);
+      inset: 0;
+      background: rgba(12, 16, 14, 0.55);
+      backdrop-filter: blur(6px);
       z-index: 1000;
       align-items: center;
       justify-content: center;
-      padding: 1.5rem;
+      padding: 24px;
     }
 
     .modal-box {
       background: var(--surface);
       border: 1px solid var(--border);
-      border-radius: var(--radius-sheet);
+      border-radius: 14px;
       width: 100%;
-      max-width: 860px;
-      max-height: 85vh;
+      max-width: 840px;
+      max-height: 82vh;
       display: flex;
       flex-direction: column;
       overflow: hidden;
-      box-shadow: 0 24px 48px -12px rgba(0, 0, 0, 0.5);
+      box-shadow: 0 32px 64px -24px rgba(0, 0, 0, 0.45);
     }
 
     .modal-head {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 1rem 1.25rem;
+      padding: 13px 18px;
       border-bottom: 1px solid var(--border);
     }
 
-    .modal-body {
-      padding: 1.1rem;
-      overflow-y: auto;
+    .modal-title {
       font-family: var(--font-mono);
-      font-size: 0.77rem;
-      line-height: 1.6;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: var(--text);
+    }
+
+    .modal-body {
+      padding: 16px 18px;
+      overflow-y: auto;
+      font-size: 11px;
+      line-height: 1.7;
       background: var(--code-bg);
       color: var(--code-ink);
       white-space: pre-wrap;
@@ -639,12 +867,16 @@
       cursor: pointer;
       background: none;
       border: none;
-      color: var(--muted);
-      font-size: 1.25rem;
-      padding: 0.2rem;
+      color: var(--faint);
+      font-size: 20px;
+      line-height: 1;
+      padding: 4px 6px;
+      border-radius: 6px;
+      transition: color 0.15s var(--ease), background 0.15s var(--ease);
     }
+    .modal-close:hover { color: var(--text); background: var(--raised); }
 
-    /* Toast Notification System */
+    /* Toast */
     .toast-container {
       position: fixed;
       bottom: 24px;
@@ -654,20 +886,20 @@
       pointer-events: none;
     }
     .toast-message {
-      background: var(--surface);
-      color: var(--text);
-      border: 1px solid var(--accent);
-      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
-      padding: 0.65rem 1.25rem;
-      border-radius: var(--radius-control);
-      font-size: 0.82rem;
+      background: var(--text);
+      color: var(--ground);
+      border: 1px solid transparent;
+      box-shadow: 0 12px 28px -8px rgba(0, 0, 0, 0.35);
+      padding: 9px 15px;
+      border-radius: 8px;
+      font-size: 12px;
       font-weight: 500;
       opacity: 0;
-      transform: translateY(12px);
-      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      transform: translateY(10px);
+      transition: opacity 0.22s var(--ease), transform 0.22s var(--ease);
       display: flex;
       align-items: center;
-      gap: 0.5rem;
+      gap: 6px;
       max-width: 90vw;
     }
     .toast-message.show {
@@ -676,19 +908,50 @@
     }
 
     footer {
+      width: 100%;
+      max-width: 1920px;
+      margin: 20px auto 0;
       text-align: center;
-      padding: 1.5rem;
+      padding: 18px 28px 24px;
       color: var(--faint);
-      font-size: 0.75rem;
-      font-family: var(--font-mono);
-      border-top: 1px solid var(--border);
-      margin-top: 2.5rem;
+      font-size: 12px;
+      letter-spacing: 0.02em;
+      border-top: 1px solid var(--rule);
+    }
+
+    @media (max-width: 1500px) {
+      .header-inner {
+        height: auto;
+        padding: 12px 24px;
+        flex-wrap: wrap;
+        row-gap: 10px;
+      }
+      .brand-group { order: 1; }
+      .controls-group { order: 2; margin-left: auto; }
+      .egress-bar {
+        order: 3;
+        flex: 1 0 100%;
+        margin: 0;
+        justify-content: flex-start;
+        padding-bottom: 2px;
+      }
+    }
+
+    @media (max-width: 1023px) {
+      .egress-bar { flex-wrap: wrap; overflow: visible; }
     }
 
     @media (max-width: 860px) {
-      .header-inner { flex-direction: column; align-items: flex-start; }
-      .egress-bar { width: 100%; overflow-x: auto; }
-      .dashboard-grid { grid-template-columns: 1fr; }
+      .header-inner { padding: 12px 16px; }
+      .egress-bar { gap: 6px; }
+      .pipeline-cell { padding: 9px 10px; }
+      main { padding: 16px 16px 4px; }
+      .tools-tray { padding: 16px; }
+    }
+
+    @media (max-width: 560px) {
+      .controls-group { width: 100%; margin-left: 0; justify-content: space-between; }
+      .brand-titles p { white-space: normal; }
     }
   </style>
 </head>
@@ -711,7 +974,7 @@
         <!-- Domestic WAN PPPoE -->
         <div class="pipeline-cell" title="主路由 pppoe-out1 直连国内公网出口">
           <span class="pulse-dot pulse-green"></span>
-          <span class="pipeline-tag">🇨🇳 宽带出口</span>
+          <span class="pipeline-tag">宽带出口</span>
           <span class="pipeline-val num" id="hdr-wan-ip" style="color:var(--accent)">114.217.234.211</span>
           <span id="hdr-wan-loc" class="num" style="color:var(--muted); font-size:0.75rem;">苏州电信</span>
         </div>
@@ -719,7 +982,7 @@
         <!-- Primary VPS -->
         <div class="pipeline-cell" title="主力线路 VPS (BandwagonHost)">
           <span class="pulse-dot pulse-green" id="vps-p-dot"></span>
-          <span class="pipeline-tag">🚀 主力 VPS</span>
+          <span class="pipeline-tag">主力 VPS</span>
           <span class="pipeline-val num" id="vps-p-ip">65.49.216.198</span>
           <span id="vps-p-lat" class="num" style="color:var(--positive); font-weight:600; font-size:0.75rem;">-- ms</span>
         </div>
@@ -727,16 +990,16 @@
         <!-- Backup VPS -->
         <div class="pipeline-cell" title="备用线路 VPS (RackNerd)">
           <span class="pulse-dot pulse-green" id="vps-b-dot"></span>
-          <span class="pipeline-tag">🛡️ 备用 VPS</span>
+          <span class="pipeline-tag">备用 VPS</span>
           <span class="pipeline-val num" id="vps-b-ip">107.172.75.159</span>
           <span id="vps-b-lat" class="num" style="color:var(--muted); font-size:0.75rem;">-- ms</span>
         </div>
 
         <!-- Realtime Traffic -->
         <div class="pipeline-cell">
-          <span style="color:var(--positive)">🔻</span>
+          <span class="arw dn" aria-hidden="true"></span>
           <span class="pipeline-val num" id="hdr-down">0 B/s</span>
-          <span style="color:var(--accent); margin-left:0.35rem;">🔺</span>
+          <span class="arw up" aria-hidden="true"></span>
           <span class="pipeline-val num" id="hdr-up">0 B/s</span>
         </div>
       </div>
@@ -744,11 +1007,11 @@
       <!-- Theme Controls -->
       <div class="controls-group">
         <div class="theme-picker">
-          <button class="theme-opt" id="theme-sys" onclick="setTheme('system')">💻 跟随系统</button>
-          <button class="theme-opt" id="theme-light" onclick="setTheme('light')">☀️ 浅色</button>
-          <button class="theme-opt" id="theme-dark" onclick="setTheme('dark')">🌙 深色</button>
+          <button class="theme-opt" id="theme-sys" onclick="setTheme('system')">自动</button>
+          <button class="theme-opt" id="theme-light" onclick="setTheme('light')">浅色</button>
+          <button class="theme-opt" id="theme-dark" onclick="setTheme('dark')">深色</button>
         </div>
-        <div class="refresh-badge">⚡ 3s 刷新</div>
+        <div class="refresh-badge">3s 刷新</div>
       </div>
     </div>
   </header>
@@ -773,38 +1036,34 @@
 
           <div class="metrics-table">
             <div class="metric-row">
-              <span class="metric-label">运行时间 (Uptime)</span>
-              <span class="metric-value num" id="ros-uptime">--</span>
+              <span class="metric-label">Winbox 通信状态</span>
+              <span class="metric-value num accent" id="ros-uptime">8291 就绪</span>
             </div>
             <div class="metric-row">
-              <span class="metric-label">CPU 负荷</span>
-              <span class="metric-value num" id="ros-cpu">-- %</span>
-            </div>
-            <div class="bar-track"><div id="ros-cpu-bar" class="bar-fill" style="width: 0%"></div></div>
-
-            <div class="metric-row" style="margin-top:0.35rem;">
-              <span class="metric-label">内存分配</span>
-              <span class="metric-value num" id="ros-mem">--</span>
-            </div>
-            <div class="bar-track"><div id="ros-mem-bar" class="bar-fill" style="width: 0%"></div></div>
-
-            <div class="metric-row" style="margin-top:0.35rem;">
-              <span class="metric-label">WAN 实时流速</span>
-              <span class="metric-value num accent" id="ros-wan-speed">--</span>
+              <span class="metric-label">网关路由型号</span>
+              <span class="metric-value num">MikroTik CHR (x86_64)</span>
             </div>
             <div class="metric-row">
-              <span class="metric-label">在线客户端 (DHCP)</span>
-              <span class="metric-value num" id="ros-dhcp">-- 台</span>
+              <span class="metric-label">pppoe-out1 外网</span>
+              <span class="metric-value num compact"><span class="arw dn" aria-hidden="true"></span><span id="ros-if-pppoe-rx" style="color:var(--positive)">0 B/s</span><span class="sep">/</span><span class="arw up" aria-hidden="true"></span><span id="ros-if-pppoe-tx" style="color:var(--accent)">0 B/s</span></span>
             </div>
-            <div id="ros-hint-row" class="metric-row" style="display:none; color:var(--warning); font-size:0.75rem;">
-              <span id="ros-hint-text"></span>
+            <div class="metric-row">
+              <span class="metric-label">Lan 全屋内网</span>
+              <span class="metric-value num compact"><span class="arw dn" aria-hidden="true"></span><span id="ros-if-lan-rx" style="color:var(--positive)">0 B/s</span><span class="sep">/</span><span class="arw up" aria-hidden="true"></span><span id="ros-if-lan-tx" style="color:var(--accent)">0 B/s</span></span>
+            </div>
+            <div class="metric-row">
+              <span class="metric-label">Wan 光猫总线</span>
+              <span class="metric-value num compact"><span class="arw dn" aria-hidden="true"></span><span id="ros-if-wan-rx" style="color:var(--positive)">0 B/s</span><span class="sep">/</span><span class="arw up" aria-hidden="true"></span><span id="ros-if-wan-tx" style="color:var(--accent)">0 B/s</span></span>
+            </div>
+            <div class="metric-row">
+              <span class="metric-label">Winbox 接口状态</span>
+              <span class="metric-value num compact" id="ros-if-badge">4 接口 [R] 全部就绪</span>
             </div>
           </div>
         </div>
 
         <div class="card-footer">
           <a class="btn btn-primary" href="http://10.10.11.1" target="_blank">WebFig 网页后台</a>
-          <button class="btn" onclick="copyIp('10.10.11.1')">复制 IP: 10.10.11.1</button>
         </div>
       </div>
 
@@ -839,8 +1098,12 @@
               <span class="metric-label">运行日志健康状态</span>
               <span class="metric-value" id="mos-health-badge">--</span>
             </div>
-            <div id="mos-alert-box" style="display:none; margin-top:0.35rem; padding:0.4rem 0.6rem; background:var(--pill-warn-bg); color:var(--pill-warn-ink); border-radius:var(--radius-control); font-size:0.74rem;">
-              <strong>最新警告:</strong> <span id="mos-alert-msg" class="num"></span>
+            <div id="mos-alert-box" class="soft-alert-box">
+              <div class="soft-alert-title">
+                <span>⚠️</span>
+                <span>最近上游告警</span>
+              </div>
+              <div class="soft-alert-content" id="mos-alert-msg"></div>
             </div>
           </div>
         </div>
@@ -879,7 +1142,7 @@
             </div>
             <div class="metric-row">
               <span class="metric-label">累计出海吞吐</span>
-              <span class="metric-value num" id="sb-total">🔻 -- / 🔺 --</span>
+              <span class="metric-value num compact"><span class="arw dn" aria-hidden="true"></span><span id="sb-total-down">--</span><span class="sep">/</span><span class="arw up" aria-hidden="true"></span><span id="sb-total-up">--</span></span>
             </div>
             <div class="metric-row">
               <span class="metric-label">活动连接与内存</span>
@@ -914,8 +1177,16 @@
               <span class="metric-value num" id="daed-endpoint-text">http://10.10.11.8:2023</span>
             </div>
             <div class="metric-row">
-              <span class="metric-label">连接探针延时</span>
-              <span class="metric-value num accent" id="daed-lat">-- ms</span>
+              <span class="metric-label">内核虚拟网卡</span>
+              <span class="metric-value num accent">dae0 (eBPF 直通)</span>
+            </div>
+            <div class="metric-row">
+              <span class="metric-label">物理绑定网卡</span>
+              <span class="metric-value num">ens18 (总线接管)</span>
+            </div>
+            <div class="metric-row">
+              <span class="metric-label">进程物理内存 (RSS)</span>
+              <span class="metric-value num" id="daed-mem">-- MB</span>
             </div>
             <div class="metric-row">
               <span class="metric-label">分流机制</span>
@@ -986,27 +1257,27 @@
       <div class="tray-title">常用网络诊断与分析工具</div>
       <div class="tray-grid">
         <a class="tray-link" href="https://www.speedtest.net/" target="_blank">
-          <span>🚀</span>
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.6 11.2a6.2 6.2 0 1 1 10.8 0"/><path d="M8 9.4 10.4 6.6"/><circle cx="8" cy="10.2" r="1.1"/></svg>
           <span>Speedtest 测速</span>
         </a>
         <a class="tray-link" href="https://ipleak.net/" target="_blank">
-          <span>🛡️</span>
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2.4 12.8 4.1v3.9c0 2.9-2.1 4.5-4.8 5.5-2.7-1-4.8-2.6-4.8-5.5V4.1L8 2.4Z"/><path d="m6 8 1.5 1.5L10.4 6.6"/></svg>
           <span>DNS 泄漏检测</span>
         </a>
         <a class="tray-link" href="https://ipinfo.io/" target="_blank">
-          <span>🌍</span>
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="8" r="5.6"/><path d="M2.6 8h10.8"/><path d="M8 2.4c3.2 2.9 3.2 8.3 0 11.2-3.2-2.9-3.2-8.3 0-11.2Z"/></svg>
           <span>IP 归属与纯净度</span>
         </a>
         <a class="tray-link" href="https://fast.com/" target="_blank">
-          <span>⚡</span>
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.2 1.8 4.2 9h3.4l-.8 5.2L12 7H8.5l.7-5.2Z"/></svg>
           <span>Netflix Fast 测速</span>
         </a>
         <a class="tray-link" href="https://ping.pe/" target="_blank">
-          <span>📡</span>
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1.8 8h2.4l1.5-4.2 2.1 8.4 1.7-5 1.2 2.8h3.5"/></svg>
           <span>全球 Ping.pe 路由</span>
         </a>
         <a class="tray-link" href="https://10.10.11.2:8006" target="_blank">
-          <span>🖥️</span>
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.2" y="3" width="11.6" height="5" rx="1.2"/><rect x="2.2" y="9.6" width="11.6" height="3.4" rx="1.2"/><path d="M4.4 5.4h.01M4.4 11.3h.01"/></svg>
           <span>PVE 9 虚拟化底座</span>
         </a>
       </div>
@@ -1017,7 +1288,7 @@
   <div class="modal" id="modal-logs">
     <div class="modal-box">
       <div class="modal-head">
-        <div style="font-weight:600; font-size:0.92rem; font-family:var(--font-mono)">📋 MosDNS 运行日志 (最近 60 条)</div>
+        <div class="modal-title">MosDNS 运行日志 · 最近 60 条</div>
         <button class="modal-close" onclick="closeMosdnsLogs()">&times;</button>
       </div>
       <div class="modal-body" id="modal-log-body">正在载入日志...</div>
@@ -1025,7 +1296,7 @@
   </div>
 
   <footer>
-    HomeNet Portal · 纯原生零开销监控架构 · Design Taste Enforced
+    HomeNet Portal · 纯原生零开销监控架构
   </footer>
 
   <script>
@@ -1139,32 +1410,32 @@
           const rosBadge = document.getElementById('ros-badge');
           const rosText = document.getElementById('ros-status-text');
 
-          if (r.rest_available) {
+          if (r.online) {
             rosBadge.className = 'status-pill pill-positive';
-            rosText.innerText = 'REST & Winbox 在线';
-            document.getElementById('ros-uptime').innerText = r.uptime || '--';
-            document.getElementById('ros-cpu').innerText = (r.cpu_load !== null ? r.cpu_load + ' %' : '--');
-            document.getElementById('ros-cpu-bar').style.width = (r.cpu_load || 0) + '%';
+            rosText.innerText = `Winbox 在线 (${r.ping_ms || 0.2} ms)`;
+            const utElem = document.getElementById('ros-uptime');
+            if (utElem) utElem.innerText = `8291 就绪 (${r.ping_ms || 0.2} ms)`;
 
-            if (r.free_memory_mb !== null && r.total_memory_mb !== null) {
-              const used = r.total_memory_mb - r.free_memory_mb;
-              document.getElementById('ros-mem').innerText = `${used}M / ${r.total_memory_mb}M (${r.memory_pct}%)`;
-              document.getElementById('ros-mem-bar').style.width = (r.memory_pct || 0) + '%';
+            if (r.interfaces && Array.isArray(r.interfaces)) {
+              for (const iface of r.interfaces) {
+                if (iface.name === 'pppoe-out1') {
+                  const rxEl = document.getElementById('ros-if-pppoe-rx');
+                  const txEl = document.getElementById('ros-if-pppoe-tx');
+                  if (rxEl && iface.rx_speed) rxEl.innerText = iface.rx_speed;
+                  if (txEl && iface.tx_speed) txEl.innerText = iface.tx_speed;
+                } else if (iface.name === 'Lan') {
+                  const rxEl = document.getElementById('ros-if-lan-rx');
+                  const txEl = document.getElementById('ros-if-lan-tx');
+                  if (rxEl && iface.rx_speed) rxEl.innerText = iface.rx_speed;
+                  if (txEl && iface.tx_speed) txEl.innerText = iface.tx_speed;
+                } else if (iface.name === 'Wan') {
+                  const rxEl = document.getElementById('ros-if-wan-rx');
+                  const txEl = document.getElementById('ros-if-wan-tx');
+                  if (rxEl && iface.rx_speed) rxEl.innerText = iface.rx_speed;
+                  if (txEl && iface.tx_speed) txEl.innerText = iface.tx_speed;
+                }
+              }
             }
-
-            document.getElementById('ros-wan-speed').innerText = `🔻 ${r.wan_rx_speed} / 🔺 ${r.wan_tx_speed}`;
-            document.getElementById('ros-dhcp').innerText = (r.dhcp_leases !== null ? r.dhcp_leases + ' 台' : '--');
-            document.getElementById('ros-hint-row').style.display = 'none';
-          } else if (r.online) {
-            rosBadge.className = 'status-pill pill-positive';
-            rosText.innerText = `Winbox 在线 (${r.ping_ms} ms)`;
-            document.getElementById('ros-uptime').innerText = '运行中 (Winbox 8291 就绪)';
-            document.getElementById('ros-cpu').innerText = '需配置 REST 密码';
-            document.getElementById('ros-mem').innerText = '端口 8291 响应正常';
-            document.getElementById('ros-wan-speed').innerText = '--';
-            document.getElementById('ros-dhcp').innerText = '--';
-            document.getElementById('ros-hint-row').style.display = 'flex';
-            document.getElementById('ros-hint-text').innerText = '提示: ' + (r.msg || '开启 www 端口并填入密码可展示 CPU/流量水表');
           } else {
             rosBadge.className = 'status-pill pill-negative';
             rosText.innerText = '离线 / 超时';
@@ -1198,7 +1469,19 @@
             mosHealth.innerHTML = `<span class="status-pill pill-warning">${m.errors_count} 错误 / ${m.warns_count} 警告</span>`;
             if (m.latest_alert) {
               alertBox.style.display = 'block';
-              document.getElementById('mos-alert-msg').innerText = m.latest_alert;
+              let displayMsg = m.latest_alert;
+              try {
+                const qMatch = m.latest_alert.match(/"qname":\s*"([^"]+)"/);
+                const uMatch = m.latest_alert.match(/"upstream":\s*"([^"]+)"/);
+                const eMatch = m.latest_alert.match(/"error":\s*"([^"]+)"/);
+                if (qMatch && eMatch) {
+                  const target = qMatch[1];
+                  const up = uMatch ? uMatch[1] : '';
+                  const err = eMatch[1];
+                  displayMsg = `${target} · ${up} · ${err}`;
+                }
+              } catch (_) {}
+              document.getElementById('mos-alert-msg').innerText = displayMsg;
             }
           }
         }
@@ -1220,7 +1503,8 @@
           document.getElementById('sb-node').innerText = s.current_node || '保底直连';
           document.getElementById('sb-down').innerText = s.download_speed || '0 B/s';
           document.getElementById('sb-up').innerText = s.upload_speed || '0 B/s';
-          document.getElementById('sb-total').innerText = `🔻 ${s.download_total} / 🔺 ${s.upload_total}`;
+          document.getElementById('sb-total-down').innerText = s.download_total;
+          document.getElementById('sb-total-up').innerText = s.upload_total;
           document.getElementById('sb-conns').innerText = `${s.connections_count} 条 (内存 ${s.memory_mb}M)`;
         }
 
@@ -1232,12 +1516,14 @@
 
           if (da.online) {
             daBadge.className = 'status-pill pill-positive';
-            daText.innerText = '正常运行';
-            document.getElementById('daed-lat').innerText = da.latency + ' ms';
+            daText.innerText = `正常运行 (${da.latency || 0.5} ms)`;
+            const memEl = document.getElementById('daed-mem');
+            if (memEl) memEl.innerText = (da.memory_mb || 0) + ' MB';
           } else {
             daBadge.className = 'status-pill pill-negative';
             daText.innerText = '连接超时';
-            document.getElementById('daed-lat').innerText = '--';
+            const memEl = document.getElementById('daed-mem');
+            if (memEl) memEl.innerText = '-- MB';
           }
         }
 
