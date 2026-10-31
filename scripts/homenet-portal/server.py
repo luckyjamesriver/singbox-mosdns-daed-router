@@ -514,6 +514,12 @@ def get_singbox_metrics():
     res = {
         "online": False,
         "current_node": "保底直连",
+        "main_route": "主力线路",
+        "primary_display": "--",
+        "backup_display": "--",
+        "failed_count": 0,
+        "failed_nodes": [],
+        "failed_text": "0 个 (全协议正常)",
         "connections_count": 0,
         "download_bps": 0,
         "upload_bps": 0,
@@ -558,10 +564,69 @@ def get_singbox_metrics():
         proxy_data = api_get("/proxies")
         if proxy_data and "proxies" in proxy_data:
             proxies = proxy_data["proxies"]
-            for group_name in ["GLOBAL", "Sing-box连接", "主力线路", "节点选择", "PROXY"]:
-                if group_name in proxies and "now" in proxies[group_name]:
-                    res["current_node"] = proxies[group_name]["now"]
-                    break
+
+            # 1. Main route selection (Sing-box连接)
+            main_route = "主力线路"
+            if "Sing-box连接" in proxies and "now" in proxies["Sing-box连接"]:
+                main_route = proxies["Sing-box连接"]["now"]
+            elif "GLOBAL" in proxies and "now" in proxies["GLOBAL"]:
+                main_route = proxies["GLOBAL"]["now"]
+            res["main_route"] = main_route
+            res["current_node"] = main_route
+
+            # 2. Primary line current protocol & delay
+            p_group = proxies.get("主力线路", {})
+            p_now = p_group.get("now", "--")
+            p_node = proxies.get(p_now, {})
+            p_hist = p_node.get("history", [])
+            p_delay = p_hist[-1].get("delay", 0) if p_hist else 0
+            if p_delay > 0:
+                res["primary_display"] = f"{p_now} ({p_delay} ms)"
+            elif p_now != "--":
+                res["primary_display"] = f"{p_now} (-- ms)"
+            else:
+                res["primary_display"] = "--"
+
+            # 3. Backup line current protocol & delay
+            b_group = proxies.get("备用线路", {})
+            b_now = b_group.get("now", "--")
+            b_clean = re.sub(r"^Back_", "", b_now)
+            b_node = proxies.get(b_now, {})
+            b_hist = b_node.get("history", [])
+            b_delay = b_hist[-1].get("delay", 0) if b_hist else 0
+            if b_delay > 0:
+                res["backup_display"] = f"{b_clean} ({b_delay} ms)"
+            elif b_now != "--":
+                res["backup_display"] = f"{b_clean} (-- ms)"
+            else:
+                res["backup_display"] = "--"
+
+            # 4. Failed nodes detection (candidates with 0 delay)
+            p_candidates = p_group.get("all", [])
+            b_candidates = b_group.get("all", [])
+
+            failed_nodes = []
+            for n in p_candidates:
+                node = proxies.get(n, {})
+                hist = node.get("history", [])
+                latest_delay = hist[-1].get("delay", 0) if hist else 0
+                if latest_delay == 0:
+                    failed_nodes.append(f"主力:{n}")
+
+            for n in b_candidates:
+                node = proxies.get(n, {})
+                hist = node.get("history", [])
+                latest_delay = hist[-1].get("delay", 0) if hist else 0
+                if latest_delay == 0:
+                    clean = re.sub(r"^Back_", "", n)
+                    failed_nodes.append(f"备用:{clean}")
+
+            res["failed_count"] = len(failed_nodes)
+            res["failed_nodes"] = failed_nodes
+            if len(failed_nodes) == 0:
+                res["failed_text"] = "0 个 (全协议正常)"
+            else:
+                res["failed_text"] = f"{len(failed_nodes)} 个 ({', '.join(failed_nodes)})"
     except Exception:
         pass
 

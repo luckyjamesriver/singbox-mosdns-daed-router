@@ -1163,20 +1163,20 @@
 
           <div class="metrics-table">
             <div class="metric-row">
-              <span class="metric-label">当前活跃出口节点</span>
-              <span class="metric-value accent" id="sb-node" style="max-width:180px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">--</span>
+              <span class="metric-label">当前出海选路</span>
+              <span class="metric-value accent" id="sb-route" style="max-width:180px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">--</span>
             </div>
             <div class="metric-row">
-              <span class="metric-label">即时下行速率</span>
-              <span class="metric-value num" style="color:var(--positive)" id="sb-down">0 B/s</span>
+              <span class="metric-label">主力线路当前协议</span>
+              <span class="metric-value num" id="sb-p-node" style="max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">--</span>
             </div>
             <div class="metric-row">
-              <span class="metric-label">即时上行速率</span>
-              <span class="metric-value num" style="color:var(--accent)" id="sb-up">0 B/s</span>
+              <span class="metric-label">备用线路当前协议</span>
+              <span class="metric-value num" id="sb-b-node" style="max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">--</span>
             </div>
             <div class="metric-row">
-              <span class="metric-label">累计出海吞吐</span>
-              <span class="metric-value num compact"><span class="arw dn" aria-hidden="true"></span><span id="sb-total-down">--</span><span class="sep">/</span><span class="arw up" aria-hidden="true"></span><span id="sb-total-up">--</span></span>
+              <span class="metric-label">故障节点检测</span>
+              <span class="metric-value num" id="sb-failed-node" style="max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">0 个 (全协议正常)</span>
             </div>
             <div class="metric-row">
               <span class="metric-label">活动连接与内存</span>
@@ -1537,11 +1537,22 @@
             sbText.innerText = '核心未响应';
           }
 
-          document.getElementById('sb-node').innerText = s.current_node || '保底直连';
-          document.getElementById('sb-down').innerText = s.download_speed || '0 B/s';
-          document.getElementById('sb-up').innerText = s.upload_speed || '0 B/s';
-          document.getElementById('sb-total-down').innerText = s.download_total;
-          document.getElementById('sb-total-up').innerText = s.upload_total;
+          document.getElementById('sb-route').innerText = s.main_route || s.current_node || '保底直连';
+          document.getElementById('sb-p-node').innerText = s.primary_display || '--';
+          document.getElementById('sb-b-node').innerText = s.backup_display || '--';
+
+          const fEl = document.getElementById('sb-failed-node');
+          if (fEl) {
+            fEl.innerText = s.failed_text || '0 个 (全协议正常)';
+            if (s.failed_count > 0) {
+              fEl.style.color = 'var(--warning)';
+              fEl.style.fontWeight = '600';
+            } else {
+              fEl.style.color = 'var(--positive)';
+              fEl.style.fontWeight = 'normal';
+            }
+          }
+
           document.getElementById('sb-conns').innerText = `${s.connections_count} 条 (内存 ${s.memory_mb}M)`;
         }
 
