@@ -1168,11 +1168,11 @@
             </div>
             <div class="metric-row">
               <span class="metric-label">主力线路当前协议</span>
-              <span class="metric-value num" id="sb-p-node" style="max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">--</span>
+              <span class="metric-value num" style="color:var(--positive)" id="sb-p-node">--</span>
             </div>
             <div class="metric-row">
               <span class="metric-label">备用线路当前协议</span>
-              <span class="metric-value num" id="sb-b-node" style="max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">--</span>
+              <span class="metric-value num" style="color:var(--accent)" id="sb-b-node">--</span>
             </div>
             <div class="metric-row">
               <span class="metric-label">故障节点检测</span>
@@ -1538,8 +1538,18 @@
           }
 
           document.getElementById('sb-route').innerText = s.main_route || s.current_node || '保底直连';
-          document.getElementById('sb-p-node').innerText = s.primary_display || '--';
-          document.getElementById('sb-b-node').innerText = s.backup_display || '--';
+          
+          const pEl = document.getElementById('sb-p-node');
+          if (pEl) {
+            pEl.innerText = s.primary_display || s.primary_protocol || '--';
+            if (s.primary_full) pEl.title = `节点: ${s.primary_full}`;
+          }
+
+          const bEl = document.getElementById('sb-b-node');
+          if (bEl) {
+            bEl.innerText = s.backup_display || s.backup_protocol || '--';
+            if (s.backup_full) bEl.title = `节点: ${s.backup_full}`;
+          }
 
           const fEl = document.getElementById('sb-failed-node');
           if (fEl) {
