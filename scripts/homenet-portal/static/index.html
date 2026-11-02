@@ -1,214 +1,149 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-appearance="light">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>HomeNet Portal · 全网监控与路由导航</title>
   <meta name="color-scheme" content="light dark">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220%22%20width=%22100%22%20height=%22100%22><text y=%22.9em%22 font-size=%2290%22>🌐</text></svg>">
-  
-  <!-- 系统字体栈：不依赖外网字体，中文与数字都与系统同源 -->
-  <meta name="theme-color" content="#f4f2ec">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220%200%20100%20100%22><text y=%22.9em%22 font-size=%2290%22>🌐</text></svg>">
+  <meta name="theme-color" content="#f1efed">
 
   <script>
-    // Anti-FOUC Theme Initialization (default to light #F5F3ED)
+    // Anti-FOUC Theme Initialization (default to light #F1EFED)
     const savedTheme = localStorage.getItem("homenet-theme") || "light";
-    if (savedTheme === "dark") {
+    const systemDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    if (savedTheme === "dark" || (savedTheme === "system" && systemDark)) {
       document.documentElement.setAttribute("data-theme", "dark");
+      document.documentElement.setAttribute("data-appearance", "dark");
     } else {
       document.documentElement.setAttribute("data-theme", "light");
+      document.documentElement.setAttribute("data-appearance", "light");
     }
   </script>
 
   <style>
     /* ==========================================================================
-       HomeNet Portal · 视觉层
-       暖白纸面 + 松绿主色；系统字体栈，数字等宽；所有层级由字号/字色/间距建立。
-       令牌集中在此，改主题只改这里。
+       HomeNet Portal · Oracle Inspired Design System
+       暖灰与白色表面 + 金棕色主按钮及状态标签 + 明亮绿色状态指示
        ========================================================================== */
     :root {
+      /* 浅色模式 (Light Mode) */
+      --hn-canvas: #ffffff;
+      --hn-page: #f1efed;
+      --hn-soft: #fbf9f8;
+      --hn-tint: #f5f4f2;
+      --hn-ink: #161513;
+      --hn-label: #625c56;
+      --hn-muted: #756e67;
+      --hn-hairline: #e4e1dd;
+      --hn-divider: #e9e7e4;
+      --hn-field: #d4cfca;
+      --hn-action: #a77c37;
+      --hn-action-hover: #946b2d;
+      --hn-on-action: #ffffff;
+      --hn-brand: #c74634;
+      --hn-forest: #15803d;
+      --hn-success-accent: #22c55e;
+      --hn-success-bg: #f0fdf4;
+      --hn-success-line: #bbf7d0;
+      --hn-gold: #f0cc71;
+      --hn-gold-soft: #f7e0a1;
+      --hn-warning-bg: #fcf6e7;
+      --hn-warning-ink: #80591b;
+      --hn-focus: #227e9e;
+      --hn-track: #e9e7e4;
+
       color-scheme: light;
-
-      /* 面 */
-      --ground: #f4f3ee;
-      --surface: #ffffff;
-      --raised: #f7f5ef;
-      --active: #ede9de;
-      --border: #e3dfd4;
-      --rule: #eeeade;
-      --control: #c9c3b4;
-      --track: #e9e5da;
-
-      /* 字 */
-      --text: #121815;
-      --muted: #46524b;
-      --faint: #6e7a72;
-
-      /* 主色 */
-      --accent: #2c5f4a;
-      --accent-strong: #24503e;
-      --accent-subtle: rgba(44, 95, 74, 0.08);
-      --accent-border: rgba(44, 95, 74, 0.24);
-
-      /* 语义状态 */
-      --positive: #2e6b4e;
-      --pill-pos-bg: #e7f0ea;
-      --pill-pos-ink: #1c4a35;
-      --pill-pos-border: #cfe1d6;
-
-      --warning: #8a5b10;
-      --pill-warn-bg: #f8edd3;
-      --pill-warn-ink: #77500f;
-      --pill-warn-border: #ebd9b0;
-
-      --negative: #a63a2e;
-      --pill-neg-bg: #fae8e4;
-      --pill-neg-ink: #8b3025;
-      --pill-neg-border: #efd2cc;
-
-      --pill-neutral-bg: #efebe1;
-      --pill-neutral-ink: #41504a;
-      --pill-neutral-border: #e1dcd0;
-
-      --primary-btn-bg: #2c5f4a;
-      --primary-btn-bg-hover: #275542;
-      --primary-btn-ink: #ffffff;
-      --brand-ink: #ffffff;
-
-      --code-bg: #0c1310;
-      --code-ink: #a8d8bc;
-
-      --radius-card: 12px;
-      --radius-control: 8px;
-      --radius-pill: 7px;
-
-      --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI",
-                   "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei",
-                   "Noto Sans CJK SC", sans-serif;
-      --font-mono: ui-monospace, "SF Mono", "JetBrains Mono", "Cascadia Mono",
-                   Menlo, Consolas, "Liberation Mono", monospace;
-
-      --shadow-card: 0 1px 2px rgba(24, 32, 26, 0.05),
-                     0 10px 22px -18px rgba(24, 32, 26, 0.22);
-      --shadow-card-hover: 0 2px 4px rgba(24, 32, 26, 0.06),
-                           0 16px 30px -20px rgba(24, 32, 26, 0.3);
-
-      --ease: cubic-bezier(0.2, 0, 0, 1);
+      width: 100%;
+      min-width: 0;
     }
 
-    /* 跟随系统 */
+    /* 跟随系统暗色 */
     @media (prefers-color-scheme: dark) {
       :root:not([data-theme="light"]) {
+        --hn-canvas: #282522;
+        --hn-page: #1c1917;
+        --hn-soft: #302c29;
+        --hn-tint: #332f2b;
+        --hn-ink: #f5f2ef;
+        --hn-label: #d0c9c2;
+        --hn-muted: #b6ada4;
+        --hn-hairline: #49423c;
+        --hn-divider: #403a34;
+        --hn-field: #62594f;
+        --hn-action: #a77c37;
+        --hn-action-hover: #946b2d;
+        --hn-on-action: #ffffff;
+        --hn-forest: #4ade80;
+        --hn-success-accent: #22c55e;
+        --hn-success-bg: #133522;
+        --hn-success-line: #256f40;
+        --hn-warning-bg: #3a3020;
+        --hn-warning-ink: #f7e0a1;
+        --hn-gold-soft: #725c2c;
+        --hn-track: #49423c;
         color-scheme: dark;
-        --ground: #0a0f0c;
-        --surface: #111814;
-        --raised: #16201a;
-        --active: #1d2923;
-        --border: #25322b;
-        --rule: #1e2a24;
-        --control: #3a4a41;
-        --track: #1b2620;
-
-        --text: #f1f5f2;
-        --muted: #a9b7ad;
-        --faint: #7e8d84;
-
-        --accent: #5cae86;
-        --accent-strong: #74c39a;
-        --accent-subtle: rgba(92, 174, 134, 0.12);
-        --accent-border: rgba(92, 174, 134, 0.3);
-
-        --positive: #5cae86;
-        --pill-pos-bg: #10301f;
-        --pill-pos-ink: #86d3ab;
-        --pill-pos-border: #1d4733;
-
-        --warning: #e5b45a;
-        --pill-warn-bg: #33240c;
-        --pill-warn-ink: #e9c77f;
-        --pill-warn-border: #4a3617;
-
-        --negative: #e8836f;
-        --pill-neg-bg: #38150f;
-        --pill-neg-ink: #f0a797;
-        --pill-neg-border: #54241b;
-
-        --pill-neutral-bg: #1b2620;
-        --pill-neutral-ink: #c3cfc7;
-        --pill-neutral-border: #2a382f;
-
-        --primary-btn-bg: #2f6a51;
-        --primary-btn-bg-hover: #3a7d60;
-        --primary-btn-ink: #ffffff;
-        --brand-ink: #07130d;
-
-        --code-bg: #060a08;
-        --code-ink: #8fd4ae;
-
-        --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.4),
-                       0 12px 24px -20px rgba(0, 0, 0, 0.9);
-        --shadow-card-hover: 0 2px 6px rgba(0, 0, 0, 0.45),
-                             0 18px 32px -22px rgba(0, 0, 0, 1);
       }
     }
 
-    /* 手动切深色 */
-    [data-theme="dark"] {
+    /* 手动深色模式 */
+    :root[data-theme="dark"],
+    [data-appearance="dark"] {
+      --hn-canvas: #282522;
+      --hn-page: #1c1917;
+      --hn-soft: #302c29;
+      --hn-tint: #332f2b;
+      --hn-ink: #f5f2ef;
+      --hn-label: #d0c9c2;
+      --hn-muted: #b6ada4;
+      --hn-hairline: #49423c;
+      --hn-divider: #403a34;
+      --hn-field: #62594f;
+      --hn-action: #a77c37;
+      --hn-action-hover: #946b2d;
+      --hn-on-action: #ffffff;
+      --hn-forest: #4ade80;
+      --hn-success-accent: #22c55e;
+      --hn-success-bg: #133522;
+      --hn-success-line: #256f40;
+      --hn-warning-bg: #3a3020;
+      --hn-warning-ink: #f7e0a1;
+      --hn-gold-soft: #725c2c;
+      --hn-track: #49423c;
       color-scheme: dark;
-      --ground: #0a0f0c;
-      --surface: #111814;
-      --raised: #16201a;
-      --active: #1d2923;
-      --border: #25322b;
-      --rule: #1e2a24;
-      --control: #3a4a41;
-      --track: #1b2620;
-
-      --text: #f1f5f2;
-      --muted: #a9b7ad;
-      --faint: #7e8d84;
-
-      --accent: #5cae86;
-      --accent-strong: #74c39a;
-      --accent-subtle: rgba(92, 174, 134, 0.12);
-      --accent-border: rgba(92, 174, 134, 0.3);
-
-      --positive: #5cae86;
-      --pill-pos-bg: #10301f;
-      --pill-pos-ink: #86d3ab;
-      --pill-pos-border: #1d4733;
-
-      --warning: #e5b45a;
-      --pill-warn-bg: #33240c;
-      --pill-warn-ink: #e9c77f;
-      --pill-warn-border: #4a3617;
-
-      --negative: #e8836f;
-      --pill-neg-bg: #38150f;
-      --pill-neg-ink: #f0a797;
-      --pill-neg-border: #54241b;
-
-      --pill-neutral-bg: #1b2620;
-      --pill-neutral-ink: #c3cfc7;
-      --pill-neutral-border: #2a382f;
-
-      --primary-btn-bg: #2f6a51;
-      --primary-btn-bg-hover: #3a7d60;
-      --primary-btn-ink: #ffffff;
-      --brand-ink: #07130d;
-
-      --code-bg: #060a08;
-      --code-ink: #8fd4ae;
-
-      --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.4),
-                     0 12px 24px -20px rgba(0, 0, 0, 0.9);
-      --shadow-card-hover: 0 2px 6px rgba(0, 0, 0, 0.45),
-                           0 18px 32px -22px rgba(0, 0, 0, 1);
     }
 
-    /* ==========================================================================
-       基础
-       ========================================================================== */
+    /* 手动浅色模式 */
+    :root[data-theme="light"],
+    [data-appearance="light"] {
+      --hn-canvas: #ffffff;
+      --hn-page: #f1efed;
+      --hn-soft: #fbf9f8;
+      --hn-tint: #f5f4f2;
+      --hn-ink: #161513;
+      --hn-label: #625c56;
+      --hn-muted: #756e67;
+      --hn-hairline: #e4e1dd;
+      --hn-divider: #e9e7e4;
+      --hn-field: #d4cfca;
+      --hn-action: #a77c37;
+      --hn-action-hover: #946b2d;
+      --hn-on-action: #ffffff;
+      --hn-brand: #c74634;
+      --hn-forest: #15803d;
+      --hn-success-accent: #22c55e;
+      --hn-success-bg: #f0fdf4;
+      --hn-success-line: #bbf7d0;
+      --hn-gold: #f0cc71;
+      --hn-gold-soft: #f7e0a1;
+      --hn-warning-bg: #fcf6e7;
+      --hn-warning-ink: #80591b;
+      --hn-focus: #227e9e;
+      --hn-track: #e9e7e4;
+      color-scheme: light;
+    }
+
+    /* 全局重置与排版 */
     *, *::before, *::after {
       box-sizing: border-box;
       margin: 0;
@@ -217,604 +152,588 @@
 
     html { -webkit-text-size-adjust: 100%; }
 
-    html, body {
-      min-height: 100vh;
-      background-color: var(--ground);
-      color: var(--text);
-      font-family: var(--font-sans);
-      font-size: 14px;
-      line-height: 1.55;
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
-      text-rendering: optimizeLegibility;
-    }
-
     body {
+      background: var(--hn-page);
+      color: var(--hn-ink);
+      font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      font-size: 14px;
+      line-height: 1.5;
+      letter-spacing: 0;
+      min-height: 100vh;
       display: flex;
       flex-direction: column;
-      font-feature-settings: "kern" 1;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      container-type: inline-size;
     }
 
-    /* 所有数字默认等宽，列与列才能对齐 */
+    h1, h2, h3, p, dl, dd { margin: 0; }
+
+    button {
+      font: inherit;
+      letter-spacing: inherit;
+      cursor: pointer;
+    }
+
+    button:focus-visible, a:focus-visible {
+      outline: 2px solid var(--hn-focus);
+      outline-offset: 3px;
+    }
+
     .num,
-    .metric-value,
-    .pipeline-val,
-    .refresh-badge {
+    .hn-ip,
+    .hn-latency,
+    .hn-top-speed,
+    .hn-row dd,
+    .hn-mono,
+    .hn-status {
       font-variant-numeric: tabular-nums;
       font-feature-settings: "tnum" 1;
     }
 
-    /* 只有真正的机器串才用等宽：IP、端点、日志、页脚 */
-    #hdr-wan-ip,
-    #vps-p-ip,
-    #vps-b-ip,
-    #daed-endpoint-text,
-    .brand-titles p,
-    .modal-body,
-    footer {
-      font-family: var(--font-mono);
+    .hn-mono {
+      font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
     }
 
-    ::selection {
-      background: rgba(44, 95, 74, 0.2);
+    .cursor-interaction { cursor: pointer; }
+
+    /* 外壳 */
+    .hn-shell {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      width: 100%;
     }
 
-    :focus-visible {
-      outline: 2px solid var(--accent);
-      outline-offset: 2px;
-      border-radius: 4px;
-    }
-
-    .modal-body::-webkit-scrollbar { width: 10px; }
-    .modal-body::-webkit-scrollbar-thumb {
-      background: #2c3a32;
-      border: 3px solid var(--code-bg);
-      border-radius: 999px;
-    }
-
-    /* ==========================================================================
-       顶栏
-       ========================================================================== */
-    header {
-      background: var(--surface);
-      border-bottom: 1px solid var(--border);
+    /* 顶栏 */
+    .hn-topbar {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      padding: 15px 26px;
+      background: var(--hn-canvas);
+      border-bottom: 1px solid var(--hn-hairline);
       position: sticky;
       top: 0;
       z-index: 100;
     }
 
-    .header-inner {
-      max-width: 1920px;
-      margin: 0 auto;
-      padding: 0 28px;
-      height: 64px;
-      display: flex;
-      flex-wrap: nowrap;
-      align-items: center;
-      justify-content: space-between;
-      gap: 24px;
-    }
-
-    .brand-group {
+    .hn-brand {
       display: flex;
       align-items: center;
-      gap: 11px;
-      flex-shrink: 0;
+      gap: 12px;
+      flex: 0 0 auto;
+      min-width: 0;
     }
 
-    .brand-mark {
-      width: 34px;
-      height: 34px;
+    .hn-mark {
+      width: 38px;
+      height: 38px;
+      display: grid;
+      place-items: center;
       border-radius: 9px;
-      background: var(--accent);
-      color: var(--brand-ink);
-      font-family: var(--font-mono);
-      font-weight: 600;
-      font-size: 12.5px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      letter-spacing: 0.01em;
-      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16);
+      background: var(--hn-brand);
+      color: #ffffff;
+      font-size: 13px;
+      font-weight: 650;
+      letter-spacing: 0.02em;
     }
 
-    .brand-titles {
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      gap: 1px;
-    }
-
-    .brand-titles h1 {
-      font-size: 16.5px;
-      font-weight: 600;
-      letter-spacing: -0.012em;
-      line-height: 1.25;
-      white-space: nowrap;
-    }
-
-    .brand-titles p {
-      font-size: 12px;
-      color: var(--faint);
-      letter-spacing: 0.01em;
-      line-height: 1.35;
-      white-space: nowrap;
-    }
-
-    /* 出口管线 */
-    .egress-bar {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      flex-wrap: nowrap;
-      overflow-x: auto;
-      scrollbar-width: none;
-      margin: 0 auto;
-    }
-    .egress-bar::-webkit-scrollbar { display: none; }
-
-    .pipeline-cell {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      min-height: 38px;
-      padding: 9px 12px;
-      background: var(--raised);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      font-size: 12px;
-      white-space: nowrap;
-      transition: border-color 0.15s var(--ease), background 0.15s var(--ease);
-    }
-    .pipeline-cell:hover { border-color: var(--control); }
-
-    .pipeline-tag {
-      font-size: 12px;
-      font-weight: 500;
-      color: var(--faint);
-      letter-spacing: 0.01em;
-    }
-
-    .pipeline-val {
-      font-weight: 600;
-      color: var(--text);
-      font-size: 12px;
-    }
-
-    .pulse-dot {
-      width: 7px;
-      height: 7px;
-      border-radius: 50%;
-      display: inline-block;
-      flex-shrink: 0;
-    }
-    .pulse-green {
-      background: var(--positive);
-      box-shadow: 0 0 0 3px rgba(46, 107, 78, 0.14);
-    }
-    .pulse-red {
-      background: var(--negative);
-      box-shadow: 0 0 0 3px rgba(166, 58, 46, 0.14);
-    }
-
-    /* 控件 */
-    .controls-group {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      flex-shrink: 0;
-    }
-
-    .theme-picker {
-      display: inline-flex;
-      background: var(--raised);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 3px;
-      gap: 2px;
-    }
-
-    .theme-opt {
-      border: none;
-      background: transparent;
-      color: var(--faint);
-      cursor: pointer;
-      height: 26px;
-      padding: 0 10px;
-      border-radius: 6px;
-      font-family: inherit;
-      font-size: 12px;
-      font-weight: 500;
-      letter-spacing: 0.01em;
-      transition: color 0.15s var(--ease), background 0.15s var(--ease);
-      white-space: nowrap;
-    }
-    .theme-opt:hover { color: var(--muted); }
-
-    .theme-opt.active {
-      background: var(--surface);
-      color: var(--text);
-      font-weight: 600;
-      box-shadow: 0 1px 2px rgba(24, 32, 26, 0.08);
-    }
-
-    .refresh-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      height: 32px;
-      padding: 0 11px;
-      font-size: 12px;
-      color: var(--faint);
-      background: transparent;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      white-space: nowrap;
-    }
-    .refresh-badge::before {
-      content: "";
-      width: 5px;
-      height: 5px;
-      border-radius: 50%;
-      background: var(--accent);
-      opacity: 0.75;
-    }
-
-    /* ==========================================================================
-       主体
-       ========================================================================== */
-    main {
-      flex: 1;
-      width: 100%;
-      max-width: 1920px;
-      margin: 0 auto;
-      padding: 24px 28px 4px;
-    }
-
-    .dashboard-grid {
-      display: grid;
-      grid-template-columns: repeat(5, minmax(0, 1fr));
-      gap: 16px;
-      align-items: stretch;
-    }
-
-    @media (max-width: 1320px) {
-      .dashboard-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-    }
-    @media (max-width: 1023px) {
-      .dashboard-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    }
-    @media (max-width: 820px) {
-      .dashboard-grid { grid-template-columns: 1fr; }
-    }
-
-    .card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-card);
-      padding: 22px 20px 20px;
-      display: flex;
-      flex-direction: column;
-      min-width: 0;
-      box-shadow: var(--shadow-card);
-      transition: box-shadow 0.18s var(--ease), border-color 0.18s var(--ease);
-    }
-
-    .card:hover {
-      border-color: var(--control);
-      box-shadow: var(--shadow-card-hover);
-    }
-
-    .card > div:first-child {
-      display: flex;
-      flex-direction: column;
-      flex: 1;
-      min-height: 0;
-    }
-
-    /* 卡头 */
-    .card-head {
-      position: relative;
-      padding-bottom: 18px;
-      border-bottom: 1px solid var(--rule);
-    }
-
-    .card-title-box {
-      width: 100%;
-      min-width: 0;
-    }
-
-    /* 状态胶囊绝对定位：标题与副标题都能用满整卡宽度，不会被挤成两行 */
-    .card-title-box h2 {
-      font-size: 16.5px;
-      font-weight: 600;
-      letter-spacing: -0.008em;
+    .hn-brand h1 {
+      font-size: 18px;
       line-height: 1.3;
-      color: var(--text);
+      font-weight: 650;
+      color: var(--hn-ink);
       white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      padding-right: 142px;
     }
 
-    .card-title-box p {
-      font-size: 12.5px;
-      color: var(--faint);
+    .hn-brand p {
       margin-top: 3px;
-      font-weight: 400;
-      line-height: 1.4;
-      font-variant-numeric: tabular-nums;
-    }
-
-    /* 状态胶囊 */
-    .status-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      height: 24px;
-      padding: 0 8px;
-      border-radius: var(--radius-pill);
-      border: 1px solid transparent;
+      font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
       font-size: 12px;
-      font-weight: 600;
-      letter-spacing: 0.005em;
+      color: var(--hn-muted);
       white-space: nowrap;
-      flex-shrink: 0;
-      font-variant-numeric: tabular-nums;
-    }
-    .status-pill .pulse-dot {
-      width: 6px;
-      height: 6px;
-      box-shadow: none;
     }
 
-    .card-head .status-pill {
-      position: absolute;
-      top: 0;
-      right: 0;
-    }
-
-    .pill-positive {
-      background: var(--pill-pos-bg);
-      color: var(--pill-pos-ink);
-      border-color: var(--pill-pos-border);
-    }
-    .pill-warning {
-      background: var(--pill-warn-bg);
-      color: var(--pill-warn-ink);
-      border-color: var(--pill-warn-border);
-    }
-    .pill-negative {
-      background: var(--pill-neg-bg);
-      color: var(--pill-neg-ink);
-      border-color: var(--pill-neg-border);
-    }
-    .pill-neutral {
-      background: var(--pill-neutral-bg);
-      color: var(--pill-neutral-ink);
-      border-color: var(--pill-neutral-border);
-    }
-
-    /* 指标表 */
-    .metrics-table {
+    .hn-top-metrics {
       display: flex;
-      flex-direction: column;
-      flex: 1;
-      padding-top: 6px;
-    }
-
-    .metric-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      padding: 12px 0;
-      border-bottom: 1px solid var(--rule);
-      min-height: 47px;
-    }
-    .metric-row:last-child { border-bottom: none; }
-
-    .metric-label {
-      color: var(--muted);
-      font-size: 13px;
-      font-weight: 400;
-      letter-spacing: 0.005em;
-      white-space: nowrap;
-      flex-shrink: 0;
-    }
-
-    .metric-value {
-      font-weight: 600;
-      color: var(--text);
-      font-size: 13.5px;
-      text-align: right;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      letter-spacing: -0.005em;
-      max-width: 62%;
-      line-height: 1.6;
-    }
-
-    .metric-value.compact {
-      font-size: 12.5px;
-      font-weight: 500;
-      letter-spacing: 0;
-    }
-
-    .metric-value.accent {
-      color: var(--accent);
-      font-weight: 600;
-    }
-
-    /* 上下行箭头：CSS 三角，不依赖 emoji 字体 */
-    .arw {
-      display: inline-block;
-      width: 0;
-      height: 0;
-      border-left: 3.5px solid transparent;
-      border-right: 3.5px solid transparent;
-      vertical-align: 1.5px;
-      margin-right: 4px;
-    }
-    .arw.dn { border-top: 5px solid var(--positive); }
-    .arw.up { border-bottom: 5px solid var(--accent); }
-    .sep { color: var(--control); margin: 0 3px; }
-
-    /* 进度条 */
-    .bar-track {
-      width: 100%;
-      height: 5px;
-      background: var(--track);
-      border-radius: 999px;
-      overflow: hidden;
-      margin: 4px 0 6px;
-      box-shadow: inset 0 1px 1px rgba(24, 32, 26, 0.05);
-    }
-
-    .bar-fill {
-      height: 100%;
-      background: linear-gradient(180deg, #37755a, #2c5f4a);
-      border-radius: 999px;
-      transition: width 0.4s var(--ease);
-    }
-
-    /* 按钮 */
-    .card-footer {
-      display: flex;
-      gap: 8px;
-      margin-top: 22px;
-    }
-
-    .btn {
-      flex: 1;
-      display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: 6px;
-      height: 42px;
-      border-radius: var(--radius-control);
-      font-family: inherit;
-      font-size: 13px;
-      font-weight: 600;
-      letter-spacing: 0.01em;
-      text-decoration: none;
-      cursor: pointer;
-      border: 1px solid transparent;
-      background: var(--primary-btn-bg);
-      color: var(--primary-btn-ink);
-      transition: background 0.15s var(--ease), box-shadow 0.15s var(--ease);
-      padding: 0 10px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1),
-                  0 1px 2px rgba(24, 32, 26, 0.16);
+      gap: 9px;
+      flex: 1;
+      min-width: 0;
     }
 
-    .btn:hover { background: var(--primary-btn-bg-hover); }
-    .btn:active { box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.18); }
-
-    .btn-primary {
-      background: var(--primary-btn-bg);
-      color: var(--primary-btn-ink);
-    }
-    .btn-primary:hover { background: var(--primary-btn-bg-hover); }
-
-    /* 告警 */
-    .soft-alert-box {
-      display: none;
-      margin-top: 12px;
-      padding: 10px 12px;
-      background: var(--pill-warn-bg);
-      border: 1px solid var(--pill-warn-border);
-      border-radius: 8px;
-      font-size: 11px;
-      line-height: 1.5;
-      color: var(--text);
-    }
-    .soft-alert-title {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      font-weight: 600;
-      color: var(--pill-warn-ink);
-      font-size: 11px;
-      margin-bottom: 3px;
-    }
-    .soft-alert-content {
-      font-family: var(--font-mono);
-      font-size: 12px;
-      line-height: 1.55;
-      color: var(--muted);
-      word-break: normal;
-      overflow-wrap: anywhere;
-    }
-
-    /* 工具条 */
-    .tools-tray {
-      margin-top: 22px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-card);
-      padding: 16px 18px 18px;
-      box-shadow: var(--shadow-card);
-    }
-
-    .tray-title {
-      font-size: 11px;
-      font-weight: 600;
-      color: var(--faint);
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      margin-bottom: 12px;
-    }
-
-    .tray-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
-      gap: 10px;
-    }
-
-    .tray-link {
+    .hn-top-metric {
       display: flex;
       align-items: center;
       gap: 9px;
-      height: 42px;
-      padding: 0 13px;
-      border-radius: var(--radius-control);
-      background: var(--raised);
-      border: 1px solid var(--border);
-      color: var(--text);
-      text-decoration: none;
+      padding: 11px 12px;
+      border: 1px solid var(--hn-hairline);
+      border-radius: 8px;
+      background: var(--hn-soft);
+      white-space: nowrap;
       font-size: 13px;
-      font-weight: 500;
-      letter-spacing: 0.01em;
-      transition: border-color 0.15s var(--ease), background 0.15s var(--ease),
-                  color 0.15s var(--ease);
+      transition: border-color 0.15s ease;
     }
 
-    .tray-link svg {
+    .hn-top-metric:hover {
+      border-color: var(--hn-field);
+    }
+
+    .hn-top-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--hn-muted);
+    }
+
+    .hn-dot {
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      flex-shrink: 0;
+      border-radius: 50%;
+      background: var(--hn-success-accent);
+    }
+
+    .hn-top-label .hn-dot {
+      width: 7px;
+      height: 7px;
+      outline: 3px solid var(--hn-success-bg);
+    }
+
+    .hn-ip {
+      font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--hn-ink);
+    }
+
+    .hn-location {
+      color: var(--hn-muted);
+      font-size: 11px;
+    }
+
+    .hn-latency {
+      color: var(--hn-forest);
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .hn-top-speed {
+      font-weight: 550;
+    }
+
+    .hn-triangle {
+      font-size: 10px;
+      color: var(--hn-success-accent);
+      display: inline-block;
+    }
+
+    .hn-sep {
+      color: var(--hn-field);
+      margin: 0 4px;
+    }
+
+    .hn-top-controls {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      flex-shrink: 0;
+    }
+
+    .hn-theme {
+      display: flex;
+      align-items: center;
+      padding: 3px;
+      border: 1px solid var(--hn-hairline);
+      border-radius: 8px;
+      background: var(--hn-tint);
+    }
+
+    .hn-theme button {
+      color: var(--hn-muted);
+      border: 0;
+      border-radius: 5px;
+      background: transparent;
+      padding: 6px 10px;
+      font-size: 12px;
+      line-height: 1.5;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+    }
+
+    .hn-theme button[aria-pressed="true"],
+    .hn-theme button.active {
+      background: var(--hn-canvas);
+      color: var(--hn-ink);
+      font-weight: 600;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    }
+
+    .hn-refresh {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border: 1px solid var(--hn-hairline);
+      border-radius: 8px;
+      color: var(--hn-muted);
+      padding: 8px 12px;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .hn-refresh .hn-dot {
+      width: 4px;
+      height: 4px;
+    }
+
+    /* 主体区域 */
+    .hn-main {
+      padding: 28px 26px 24px;
+      flex: 1;
+      width: 100%;
+      max-width: 1920px;
+      margin: 0 auto;
+    }
+
+    .hn-modules {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 20px;
+      align-items: stretch;
+    }
+
+    /* 模块卡片 */
+    .hn-module {
+      min-width: 0;
+      min-height: 510px;
+      background: var(--hn-canvas);
+      border: 1px solid var(--hn-hairline);
+      border-radius: 12px;
+      padding: 24px 22px 22px;
+      display: flex;
+      flex-direction: column;
+      transition: border-color 0.18s ease;
+    }
+
+    .hn-module:hover {
+      border-color: var(--hn-field);
+    }
+
+    /* 标题区与留白 */
+    .hn-module-head {
+      padding-bottom: 19px;
+      margin-bottom: 24px;
+      border-bottom: 1px solid var(--hn-divider);
+    }
+
+    .hn-title-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .hn-module h2 {
+      color: var(--hn-ink);
+      font-size: 18px;
+      line-height: 1.4;
+      font-weight: 650;
+      letter-spacing: -0.01em;
+    }
+
+    /* 状态标签：与主按钮使用相同的 #A77C37 背景和边框，白字 600，在线圆点 #22C55E */
+    .hn-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 8px;
+      border-radius: 6px;
+      border: 1px solid var(--hn-action);
+      color: var(--hn-on-action);
+      background: var(--hn-action);
+      font-size: 12px;
+      line-height: 1.5;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .hn-status-offline {
+      background: var(--hn-brand) !important;
+      border-color: var(--hn-brand) !important;
+      color: #ffffff !important;
+    }
+    .hn-status-offline .hn-dot {
+      background: #ffffff !important;
+    }
+
+    .hn-status-backup {
+      background: var(--hn-tint) !important;
+      border-color: var(--hn-hairline) !important;
+      color: var(--hn-muted) !important;
+    }
+    .hn-status-backup .hn-dot {
+      background: var(--hn-muted) !important;
+    }
+
+    .hn-subtitle {
+      color: var(--hn-muted);
+      font-size: 13px;
+      line-height: 1.5;
+      margin-top: 5px;
+      overflow-wrap: anywhere;
+    }
+
+    /* 数据行 */
+    .hn-rows {
+      width: 100%;
+    }
+
+    .hn-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      min-height: 53px;
+      padding: 14px 0;
+      border-bottom: 1px solid var(--hn-divider);
+    }
+
+    .hn-row:last-child {
+      border-bottom: 0;
+    }
+
+    .hn-row dt {
+      color: var(--hn-label);
+      font-size: 14px;
+      line-height: 1.5;
+      font-weight: 400;
+      min-width: 0;
+      flex-shrink: 0;
+    }
+
+    .hn-row dd {
+      color: var(--hn-ink);
+      font-size: 14px;
+      line-height: 1.5;
+      font-weight: 550;
+      text-align: right;
+      min-width: 0;
+      overflow-wrap: anywhere;
+    }
+
+    .hn-row dd.hn-good {
+      color: var(--hn-forest);
+    }
+
+    .hn-row dd.hn-normal-weight {
+      font-weight: 400;
+    }
+
+    .hn-flow {
+      font-weight: 400;
+      white-space: nowrap;
+    }
+
+    .hn-flow .hn-triangle {
+      margin-right: 2px;
+    }
+
+    .hn-warning-badge {
+      display: inline-block;
+      padding: 3px 8px;
+      border: 1px solid var(--hn-gold-soft);
+      border-radius: 6px;
+      background: var(--hn-warning-bg);
+      color: var(--hn-warning-ink);
+      font-size: 12px;
+      line-height: 1.5;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    /* MosDNS 日志块 */
+    .hn-logbox {
+      margin-top: 14px;
+      padding: 12px 13px;
+      border: 1px solid var(--hn-gold-soft);
+      border-radius: 8px;
+      background: var(--hn-warning-bg);
+    }
+
+    .hn-log-title {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--hn-warning-ink);
+      font-size: 12px;
+      line-height: 1.5;
+      font-weight: 550;
+    }
+
+    .hn-log-title svg {
+      width: 13px;
+      height: 13px;
+      flex-shrink: 0;
+    }
+
+    .hn-logbox pre {
+      margin: 6px 0 0;
+      color: var(--hn-label);
+      font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+      font-size: 13px;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    /* 资源横条 (Debian) */
+    .hn-resource-row {
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--hn-divider);
+    }
+
+    .hn-resource-row .hn-row {
+      border: 0;
+      padding-bottom: 10px;
+    }
+
+    .hn-resource-row:last-child {
+      border-bottom: 0;
+      padding-bottom: 0;
+    }
+
+    .hn-track {
+      height: 5px;
+      border-radius: 3px;
+      background: var(--hn-track);
+      overflow: hidden;
+    }
+
+    .hn-fill {
+      height: 100%;
+      border-radius: 3px;
+      background: var(--hn-success-accent);
+      transition: width 0.3s ease;
+    }
+
+    .hn-resource-row + .hn-resource-row {
+      margin-top: 14px;
+    }
+
+    /* 弹性卡片留白 */
+    .hn-card-space {
+      min-height: 23px;
+      flex: 1;
+    }
+
+    /* 主按钮 */
+    .hn-action {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      min-height: 46px;
+      border: 1px solid transparent;
+      border-radius: 7px;
+      background: var(--hn-action);
+      color: var(--hn-on-action);
+      padding: 11px 12px;
+      margin-top: auto;
+      font-size: 14px;
+      line-height: 1.5;
+      font-weight: 600;
+      text-align: center;
+      text-decoration: none;
+      box-sizing: border-box;
+      transition: background-color 0.15s ease;
+    }
+
+    .hn-action:hover {
+      background: var(--hn-action-hover);
+    }
+
+    /* 底部工具区 */
+    .hn-tools {
+      margin-top: 24px;
+      padding: 19px 20px 20px;
+      border: 1px solid var(--hn-hairline);
+      border-radius: 12px;
+      background: var(--hn-canvas);
+    }
+
+    .hn-tools h3 {
+      color: var(--hn-muted);
+      font-size: 12px;
+      line-height: 1.5;
+      font-weight: 550;
+      margin-bottom: 13px;
+    }
+
+    .hn-tool-grid {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .hn-tool {
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 10px;
+      min-width: 0;
+      min-height: 47px;
+      padding: 12px 15px;
+      border: 1px solid var(--hn-hairline);
+      border-radius: 8px;
+      background: var(--hn-tint);
+      color: var(--hn-ink);
+      font-size: 14px;
+      line-height: 1.5;
+      text-align: left;
+      font-weight: 500;
+      text-decoration: none;
+      transition: border-color 0.15s ease, background-color 0.15s ease;
+    }
+
+    .hn-tool:hover {
+      border-color: var(--hn-field);
+      background: var(--hn-soft);
+    }
+
+    .hn-tool svg {
+      color: var(--hn-muted);
       width: 16px;
       height: 16px;
       flex-shrink: 0;
-      color: var(--faint);
-      transition: color 0.15s var(--ease);
+      transition: color 0.15s ease;
     }
 
-    .tray-link:hover {
-      border-color: var(--accent-border);
-      background: var(--accent-subtle);
-      color: var(--accent-strong);
+    .hn-tool:hover svg {
+      color: var(--hn-ink);
     }
-    .tray-link:hover svg { color: var(--accent); }
+
+    /* 页脚 */
+    .hn-footer {
+      margin-top: auto;
+      padding: 20px 24px;
+      border-top: 1px solid var(--hn-hairline);
+      text-align: center;
+      color: var(--hn-muted);
+      font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+      font-size: 12px;
+      line-height: 1.5;
+    }
 
     /* 日志弹窗 */
     .modal {
       display: none;
       position: fixed;
       inset: 0;
-      background: rgba(12, 16, 14, 0.55);
+      background: rgba(18, 16, 14, 0.6);
       backdrop-filter: blur(6px);
       z-index: 1000;
       align-items: center;
@@ -823,11 +742,11 @@
     }
 
     .modal-box {
-      background: var(--surface);
-      border: 1px solid var(--border);
+      background: var(--hn-canvas);
+      border: 1px solid var(--hn-hairline);
       border-radius: 14px;
       width: 100%;
-      max-width: 840px;
+      max-width: 860px;
       max-height: 82vh;
       display: flex;
       flex-direction: column;
@@ -839,33 +758,15 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 13px 18px;
-      border-bottom: 1px solid var(--border);
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--hn-divider);
     }
 
     .modal-title {
-      font-family: var(--font-mono);
-      font-size: 12px;
+      font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+      font-size: 13px;
       font-weight: 600;
-      letter-spacing: 0.02em;
-      color: var(--text);
-    }
-
-    .modal-body {
-      padding: 16px 18px;
-      overflow-y: auto;
-      font-size: 11px;
-      line-height: 1.7;
-      background: var(--code-bg);
-      color: var(--code-ink);
-      white-space: pre-wrap;
-      word-break: break-all;
-    }
-
-    .modal-body::selection,
-    .modal-body *::selection {
-      background: #1c523b;
-      color: #ffffff;
+      color: var(--hn-ink);
     }
 
     .modal-actions {
@@ -878,39 +779,58 @@
       display: inline-flex;
       align-items: center;
       gap: 5px;
-      padding: 4px 10px;
+      padding: 6px 12px;
       font-size: 12px;
       font-weight: 500;
-      color: var(--text);
-      background: var(--raised);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-control);
+      color: var(--hn-ink);
+      background: var(--hn-tint);
+      border: 1px solid var(--hn-hairline);
+      border-radius: 6px;
       cursor: pointer;
-      transition: all 0.15s var(--ease);
+      transition: all 0.15s ease;
       font-family: inherit;
-      line-height: 1.4;
     }
 
     .modal-copy-btn:hover {
-      background: var(--active);
-      border-color: var(--control);
-      color: var(--accent);
+      background: var(--hn-soft);
+      border-color: var(--hn-field);
     }
 
     .modal-close {
       cursor: pointer;
       background: none;
       border: none;
-      color: var(--faint);
-      font-size: 20px;
+      color: var(--hn-muted);
+      font-size: 22px;
       line-height: 1;
       padding: 4px 6px;
       border-radius: 6px;
-      transition: color 0.15s var(--ease), background 0.15s var(--ease);
+      transition: color 0.15s ease;
     }
-    .modal-close:hover { color: var(--text); background: var(--raised); }
 
-    /* Toast */
+    .modal-close:hover {
+      color: var(--hn-ink);
+    }
+
+    .modal-body {
+      padding: 16px 20px;
+      overflow-y: auto;
+      font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+      font-size: 12px;
+      line-height: 1.65;
+      background: #1c1917;
+      color: #a8d8bc;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+
+    .modal-body::-webkit-scrollbar { width: 10px; }
+    .modal-body::-webkit-scrollbar-thumb {
+      background: #332f2b;
+      border-radius: 999px;
+    }
+
+    /* 全局 Toast */
     .toast-container {
       position: fixed;
       bottom: 24px;
@@ -919,10 +839,11 @@
       z-index: 10000;
       pointer-events: none;
     }
+
     .toast-message {
-      background: var(--text);
-      color: var(--ground);
-      border: 1px solid transparent;
+      background: var(--hn-ink);
+      color: var(--hn-canvas);
+      border: 1px solid var(--hn-hairline);
       box-shadow: 0 12px 28px -8px rgba(0, 0, 0, 0.35);
       padding: 9px 15px;
       border-radius: 8px;
@@ -930,411 +851,510 @@
       font-weight: 500;
       opacity: 0;
       transform: translateY(10px);
-      transition: opacity 0.22s var(--ease), transform 0.22s var(--ease);
+      transition: opacity 0.22s ease, transform 0.22s ease;
       display: flex;
       align-items: center;
       gap: 6px;
       max-width: 90vw;
     }
+
     .toast-message.show {
       opacity: 1;
       transform: translateY(0);
     }
 
-    footer {
-      width: 100%;
-      max-width: 1920px;
-      margin: 20px auto 0;
-      text-align: center;
-      padding: 18px 28px 24px;
-      color: var(--faint);
-      font-size: 12px;
-      letter-spacing: 0.02em;
-      border-top: 1px solid var(--rule);
+    /* ==========================================================================
+       响应式断点 (同时支持 CSS Container Query 与 Viewport Media Query)
+       1760px, 1480px, 1100px, 800px, 540px
+       ========================================================================== */
+    @container (max-width: 1760px), screen and (max-width: 1760px) {
+      .hn-topbar { gap: 16px; padding-left: 22px; padding-right: 22px; }
+      .hn-brand p { font-size: 11px; }
+      .hn-top-metric { gap: 7px; padding: 10px 9px; font-size: 12px; }
+      .hn-ip { font-size: 12px; }
+      .hn-main { padding-left: 22px; padding-right: 22px; }
+      .hn-modules { gap: 16px; }
+      .hn-module { padding-left: 18px; padding-right: 18px; }
+      .hn-module h2 { font-size: 16px; }
+      .hn-status { font-size: 11px; }
+      .hn-row { gap: 8px; }
+      .hn-row dt, .hn-row dd { font-size: 13px; }
     }
 
-    @media (max-width: 1500px) {
-      .header-inner {
-        height: auto;
-        padding: 12px 24px;
-        flex-wrap: wrap;
-        row-gap: 10px;
-      }
-      .brand-group { order: 1; }
-      .controls-group { order: 2; margin-left: auto; }
-      .egress-bar {
-        order: 3;
-        flex: 1 0 100%;
-        margin: 0;
-        justify-content: flex-start;
-        padding-bottom: 2px;
-      }
+    @container (max-width: 1480px), screen and (max-width: 1480px) {
+      .hn-topbar { flex-wrap: wrap; }
+      .hn-brand { flex: 1; }
+      .hn-top-metrics { order: 3; flex-basis: 100%; justify-content: flex-start; flex-wrap: wrap; }
+      .hn-module-head { min-height: 106px; }
+      .hn-title-row { align-items: flex-start; flex-direction: column; gap: 8px; }
+      .hn-row { flex-wrap: wrap; row-gap: 4px; min-height: 67px; padding: 12px 0; }
+      .hn-row dd { margin-left: auto; }
+      .hn-flow { white-space: normal; }
+      .hn-action { font-size: 13px; }
+      .hn-tool { font-size: 13px; padding: 10px 12px; }
+      .hn-shell { min-height: 980px; }
     }
 
-    @media (max-width: 1023px) {
-      .egress-bar { flex-wrap: wrap; overflow: visible; }
+    @container (max-width: 1100px), screen and (max-width: 1100px) {
+      .hn-main { padding: 22px 16px; }
+      .hn-modules { gap: 10px; }
+      .hn-module { padding: 18px 12px 16px; }
+      .hn-module h2 { font-size: 15px; }
+      .hn-subtitle { font-size: 12px; }
+      .hn-row dt { font-size: 12px; }
+      .hn-row dd { font-size: 12px; }
+      .hn-status { padding: 3px 5px; gap: 4px; white-space: normal; }
+      .hn-logbox { padding: 10px; }
+      .hn-logbox pre { font-size: 12px; }
+      .hn-warning-badge { padding: 3px 5px; font-size: 11px; }
+      .hn-action { font-size: 12px; padding: 10px 5px; }
+      .hn-tools { padding: 17px 14px; }
+      .hn-tool-grid { gap: 8px; }
+      .hn-tool { font-size: 12px; padding: 10px 8px; gap: 7px; }
     }
 
-    @media (max-width: 860px) {
-      .header-inner { padding: 12px 16px; }
-      .egress-bar { gap: 6px; }
-      .pipeline-cell { padding: 9px 10px; }
-      main { padding: 16px 16px 4px; }
-      .tools-tray { padding: 16px; }
+    @container (max-width: 800px), screen and (max-width: 800px) {
+      .hn-modules { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .hn-module-head { min-height: 0; }
+      .hn-title-row { flex-direction: row; align-items: center; }
+      .hn-module { min-height: 490px; padding: 20px; }
+      .hn-module h2 { font-size: 16px; }
+      .hn-row { min-height: 54px; }
+      .hn-row dt, .hn-row dd { font-size: 13px; }
+      .hn-tool-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .hn-shell { min-height: 0; }
+      .hn-footer { margin-top: 28px; }
     }
 
-    @media (max-width: 560px) {
-      .controls-group { width: 100%; margin-left: 0; justify-content: space-between; }
-      .brand-titles p { white-space: normal; }
+    @container (max-width: 540px), screen and (max-width: 540px) {
+      .hn-topbar { padding: 18px 16px; gap: 14px; }
+      .hn-brand { flex-basis: 100%; }
+      .hn-brand h1 { font-size: 17px; }
+      .hn-brand p { font-size: 11px; white-space: normal; }
+      .hn-top-controls { flex-basis: 100%; justify-content: space-between; }
+      .hn-top-metrics { gap: 8px; }
+      .hn-top-metric { flex-wrap: wrap; width: 100%; justify-content: space-between; }
+      .hn-main { padding: 18px 14px; }
+      .hn-modules { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+      .hn-module { padding: 20px 18px; }
+      .hn-tool-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+
+    @media (pointer: coarse) {
+      .hn-theme button { min-height: 44px; }
+      .hn-action { min-height: 48px; }
+      .hn-tool { min-height: 48px; }
     }
   </style>
 </head>
 <body>
 
-  <!-- Top Frame Header -->
-  <header>
-    <div class="header-inner">
-      <!-- Product Mark & Name -->
-      <div class="brand-group">
-        <div class="brand-mark">HN</div>
-        <div class="brand-titles">
+  <div class="hn-shell">
+    <!-- Topbar Header -->
+    <header class="hn-topbar">
+      <!-- Product Brand -->
+      <div class="hn-brand">
+        <span class="hn-mark" aria-hidden="true">HN</span>
+        <div>
           <h1>HomeNet Portal</h1>
-          <p>Gateway Stack & Outbound Routing</p>
+          <p>Gateway Stack &amp; Outbound Routing</p>
         </div>
       </div>
 
-      <!-- Real Egress Pipeline -->
-      <div class="egress-bar">
+      <!-- Real Egress & Latency Metrics -->
+      <div class="hn-top-metrics">
         <!-- Domestic WAN PPPoE -->
-        <div class="pipeline-cell" title="主路由 pppoe-out1 直连国内公网出口">
-          <span class="pulse-dot pulse-green"></span>
-          <span class="pipeline-tag">宽带出口</span>
-          <span class="pipeline-val num" id="hdr-wan-ip" style="color:var(--accent)">114.217.234.211</span>
-          <span id="hdr-wan-loc" class="num" style="color:var(--muted); font-size:0.75rem;">苏州电信</span>
+        <div class="hn-top-metric" title="主路由 pppoe-out1 直连国内公网出口">
+          <span class="hn-top-label"><span class="hn-dot" aria-hidden="true"></span>宽带出口</span>
+          <span class="hn-ip" id="hdr-wan-ip">114.217.234.211</span>
+          <span class="hn-location" id="hdr-wan-loc">江苏 苏州 电信</span>
         </div>
 
         <!-- Primary VPS -->
-        <div class="pipeline-cell" title="主力线路 VPS (BandwagonHost)">
-          <span class="pulse-dot pulse-green" id="vps-p-dot"></span>
-          <span class="pipeline-tag">主力 VPS</span>
-          <span class="pipeline-val num" id="vps-p-ip">65.49.216.198</span>
-          <span id="vps-p-lat" class="num" style="color:var(--positive); font-weight:600; font-size:0.75rem;">-- ms</span>
+        <div class="hn-top-metric" title="主力线路 VPS (BandwagonHost)">
+          <span class="hn-top-label"><span class="hn-dot" id="vps-p-dot" aria-hidden="true"></span>主力 VPS</span>
+          <span class="hn-ip" id="vps-p-ip">65.49.216.198</span>
+          <span class="hn-latency" id="vps-p-lat">-- ms</span>
         </div>
 
         <!-- Backup VPS -->
-        <div class="pipeline-cell" title="备用线路 VPS (RackNerd)">
-          <span class="pulse-dot pulse-green" id="vps-b-dot"></span>
-          <span class="pipeline-tag">备用 VPS</span>
-          <span class="pipeline-val num" id="vps-b-ip">107.172.75.159</span>
-          <span id="vps-b-lat" class="num" style="color:var(--muted); font-size:0.75rem;">-- ms</span>
+        <div class="hn-top-metric" title="备用线路 VPS (RackNerd)">
+          <span class="hn-top-label"><span class="hn-dot" id="vps-b-dot" aria-hidden="true"></span>备用 VPS</span>
+          <span class="hn-ip" id="vps-b-ip">107.172.75.159</span>
+          <span class="hn-latency" id="vps-b-lat">-- ms</span>
         </div>
 
         <!-- Realtime Traffic -->
-        <div class="pipeline-cell">
-          <span class="arw dn" aria-hidden="true"></span>
-          <span class="pipeline-val num" id="hdr-down">0 B/s</span>
-          <span class="arw up" aria-hidden="true"></span>
-          <span class="pipeline-val num" id="hdr-up">0 B/s</span>
+        <div class="hn-top-metric hn-top-speed">
+          <span class="hn-triangle" aria-hidden="true">▼</span>
+          <span id="hdr-down">0 B/s</span>
+          <span class="hn-triangle" aria-hidden="true">▲</span>
+          <span id="hdr-up">0 B/s</span>
         </div>
       </div>
 
-      <!-- Theme Controls -->
-      <div class="controls-group">
-        <div class="theme-picker">
-          <button class="theme-opt" id="theme-sys" onclick="setTheme('system')">自动</button>
-          <button class="theme-opt" id="theme-light" onclick="setTheme('light')">浅色</button>
-          <button class="theme-opt" id="theme-dark" onclick="setTheme('dark')">深色</button>
+      <!-- Controls: Theme & Polling indicator -->
+      <div class="hn-top-controls">
+        <div class="hn-theme" role="group" aria-label="外观">
+          <button class="cursor-interaction" type="button" id="theme-sys" onclick="setTheme('system')">自动</button>
+          <button class="cursor-interaction" type="button" id="theme-light" onclick="setTheme('light')">浅色</button>
+          <button class="cursor-interaction" type="button" id="theme-dark" onclick="setTheme('dark')">深色</button>
         </div>
-        <div class="refresh-badge">3s 刷新</div>
+        <span class="hn-refresh"><span class="hn-dot" aria-hidden="true"></span>3s 刷新</span>
       </div>
-    </div>
-  </header>
+    </header>
 
-  <!-- Main Canvas Grid -->
-  <main>
-    <div class="dashboard-grid">
+    <!-- Main 5-Module Dashboard -->
+    <main class="hn-main">
+      <div class="hn-modules">
 
-      <!-- 1. RouterOS Card -->
-      <div class="card" id="card-ros">
-        <div>
-          <div class="card-head">
-            <div class="card-title-box">
-              <h2>RouterOS 主路由</h2>
-              <p>MikroTik CHR · 10.10.11.1</p>
+        <!-- 1. RouterOS Card -->
+        <article class="hn-module" aria-labelledby="oracle-router-title" id="card-ros">
+          <header class="hn-module-head">
+            <div class="hn-title-row">
+              <h2 id="oracle-router-title">RouterOS 主路由</h2>
+              <span id="ros-badge" class="hn-status">
+                <span class="hn-dot" aria-hidden="true"></span>
+                <span id="ros-status-text">Winbox 在线 (0.2 ms)</span>
+              </span>
             </div>
-            <div id="ros-badge" class="status-pill pill-positive">
-              <span class="pulse-dot pulse-green"></span>
-              <span id="ros-status-text">检测中</span>
+            <p class="hn-subtitle">MikroTik CHR · 10.10.11.1</p>
+          </header>
+
+          <dl class="hn-rows">
+            <div class="hn-row">
+              <dt>Winbox 通信状态</dt>
+              <dd class="hn-good" id="ros-uptime">8291 就绪 (0.2 ms)</dd>
             </div>
+            <div class="hn-row">
+              <dt>网关路由型号</dt>
+              <dd>MikroTik CHR (x86_64)</dd>
+            </div>
+            <div class="hn-row">
+              <dt>pppoe-out1 外网</dt>
+              <dd class="hn-good hn-normal-weight">
+                <span class="hn-flow">
+                  <span class="hn-triangle" aria-hidden="true">▼</span>
+                  <span id="ros-if-pppoe-rx">0 B/s</span>
+                  <span class="hn-sep">/</span>
+                  <span class="hn-triangle" aria-hidden="true">▲</span>
+                  <span id="ros-if-pppoe-tx">0 B/s</span>
+                </span>
+              </dd>
+            </div>
+            <div class="hn-row">
+              <dt>Lan 全屋内网</dt>
+              <dd class="hn-good hn-normal-weight">
+                <span class="hn-flow">
+                  <span class="hn-triangle" aria-hidden="true">▼</span>
+                  <span id="ros-if-lan-rx">0 B/s</span>
+                  <span class="hn-sep">/</span>
+                  <span class="hn-triangle" aria-hidden="true">▲</span>
+                  <span id="ros-if-lan-tx">0 B/s</span>
+                </span>
+              </dd>
+            </div>
+            <div class="hn-row">
+              <dt>Wan 光猫总线</dt>
+              <dd class="hn-good hn-normal-weight">
+                <span class="hn-flow">
+                  <span class="hn-triangle" aria-hidden="true">▼</span>
+                  <span id="ros-if-wan-rx">0 B/s</span>
+                  <span class="hn-sep">/</span>
+                  <span class="hn-triangle" aria-hidden="true">▲</span>
+                  <span id="ros-if-wan-tx">0 B/s</span>
+                </span>
+              </dd>
+            </div>
+            <div class="hn-row">
+              <dt>Winbox 接口状态</dt>
+              <dd id="ros-if-badge">4 接口 [R] 全部就绪</dd>
+            </div>
+          </dl>
+
+          <div class="hn-card-space"></div>
+          <a class="hn-action cursor-interaction" href="http://10.10.11.1" target="_blank">WebFig 网页后台</a>
+        </article>
+
+        <!-- 2. MosDNS Card -->
+        <article class="hn-module" aria-labelledby="oracle-mos-title" id="card-mosdns">
+          <header class="hn-module-head">
+            <div class="hn-title-row">
+              <h2 id="oracle-mos-title">MosDNS 解析中心</h2>
+              <span id="mos-badge" class="hn-status">
+                <span class="hn-dot" aria-hidden="true"></span>
+                <span id="mos-status-text">服务正常</span>
+              </span>
+            </div>
+            <p class="hn-subtitle">智能分流与防污染 · 端口 :53</p>
+          </header>
+
+          <dl class="hn-rows">
+            <div class="hn-row">
+              <dt>端口 53 状态</dt>
+              <dd id="mos-port-stat">0.0.0.0:53 (UDP/TCP 监听)</dd>
+            </div>
+            <div class="hn-row">
+              <dt>本地 DNS 往返延时</dt>
+              <dd class="hn-good" id="mos-latency">5 ms</dd>
+            </div>
+            <div class="hn-row">
+              <dt>进程物理内存 (RSS)</dt>
+              <dd id="mos-mem">98.9 MB</dd>
+            </div>
+            <div class="hn-row">
+              <dt>运行日志健康状态</dt>
+              <dd id="mos-health-badge">
+                <span class="hn-warning-badge">0 错误 / 142 警告</span>
+              </dd>
+            </div>
+          </dl>
+
+          <div class="hn-logbox" id="mos-alert-box" style="display:none;">
+            <p class="hn-log-title">
+              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/>
+                <line x1="12" x2="12" y1="9" y2="13"/>
+                <line x1="12" x2="12.01" y1="17" y2="17"/>
+              </svg>
+              <span>最近上游告警</span>
+            </p>
+            <pre id="mos-alert-msg"></pre>
           </div>
 
-          <div class="metrics-table">
-            <div class="metric-row">
-              <span class="metric-label">Winbox 通信状态</span>
-              <span class="metric-value num accent" id="ros-uptime">8291 就绪</span>
-            </div>
-            <div class="metric-row">
-              <span class="metric-label">网关路由型号</span>
-              <span class="metric-value num">MikroTik CHR (x86_64)</span>
-            </div>
-            <div class="metric-row">
-              <span class="metric-label">pppoe-out1 外网</span>
-              <span class="metric-value num compact"><span class="arw dn" aria-hidden="true"></span><span id="ros-if-pppoe-rx" style="color:var(--positive)">0 B/s</span><span class="sep">/</span><span class="arw up" aria-hidden="true"></span><span id="ros-if-pppoe-tx" style="color:var(--accent)">0 B/s</span></span>
-            </div>
-            <div class="metric-row">
-              <span class="metric-label">Lan 全屋内网</span>
-              <span class="metric-value num compact"><span class="arw dn" aria-hidden="true"></span><span id="ros-if-lan-rx" style="color:var(--positive)">0 B/s</span><span class="sep">/</span><span class="arw up" aria-hidden="true"></span><span id="ros-if-lan-tx" style="color:var(--accent)">0 B/s</span></span>
-            </div>
-            <div class="metric-row">
-              <span class="metric-label">Wan 光猫总线</span>
-              <span class="metric-value num compact"><span class="arw dn" aria-hidden="true"></span><span id="ros-if-wan-rx" style="color:var(--positive)">0 B/s</span><span class="sep">/</span><span class="arw up" aria-hidden="true"></span><span id="ros-if-wan-tx" style="color:var(--accent)">0 B/s</span></span>
-            </div>
-            <div class="metric-row">
-              <span class="metric-label">Winbox 接口状态</span>
-              <span class="metric-value num compact" id="ros-if-badge">4 接口 [R] 全部就绪</span>
-            </div>
-          </div>
-        </div>
+          <div class="hn-card-space"></div>
+          <button class="hn-action cursor-interaction" type="button" onclick="openMosdnsLogs()">查看运行日志 (最近60条)</button>
+        </article>
 
-        <div class="card-footer">
-          <a class="btn btn-primary" href="http://10.10.11.1" target="_blank">WebFig 网页后台</a>
-        </div>
-      </div>
+        <!-- 3. Sing-box Card -->
+        <article class="hn-module" aria-labelledby="oracle-sing-title" id="card-singbox">
+          <header class="hn-module-head">
+            <div class="hn-title-row">
+              <h2 id="oracle-sing-title">Sing-box 出海内核</h2>
+              <span id="sb-badge" class="hn-status">
+                <span class="hn-dot" aria-hidden="true"></span>
+                <span id="sb-status-text">核心在线</span>
+              </span>
+            </div>
+            <p class="hn-subtitle">Clash-API 协议栈 · 端口 :9090</p>
+          </header>
 
-      <!-- 2. MosDNS Card -->
-      <div class="card" id="card-mosdns">
-        <div>
-          <div class="card-head">
-            <div class="card-title-box">
-              <h2>MosDNS 解析中心</h2>
-              <p>智能分流与防污染 · 端口 :53</p>
+          <dl class="hn-rows">
+            <div class="hn-row">
+              <dt>当前出海选路</dt>
+              <dd class="hn-good" id="sb-route">主力线路</dd>
             </div>
-            <div id="mos-badge" class="status-pill pill-positive">
-              <span class="pulse-dot pulse-green"></span>
-              <span id="mos-status-text">检测中</span>
+            <div class="hn-row">
+              <dt>主力线路当前协议</dt>
+              <dd class="hn-good" id="sb-p-node">Hysteria2</dd>
             </div>
-          </div>
+            <div class="hn-row">
+              <dt>备用线路当前协议</dt>
+              <dd class="hn-good" id="sb-b-node">Hysteria2</dd>
+            </div>
+            <div class="hn-row">
+              <dt>故障节点检测</dt>
+              <dd class="hn-good hn-normal-weight" id="sb-failed-node">0 个 (全协议正常)</dd>
+            </div>
+            <div class="hn-row">
+              <dt>活动连接与内存</dt>
+              <dd id="sb-conns">84 条 (内存 22.9M)</dd>
+            </div>
+          </dl>
 
-          <div class="metrics-table">
-            <div class="metric-row">
-              <span class="metric-label">端口 53 状态</span>
-              <span class="metric-value num" id="mos-port-stat">--</span>
+          <div class="hn-card-space"></div>
+          <a class="hn-action cursor-interaction" id="sb-proxies-link" href="http://10.10.11.8:9090/ui/#/proxies" target="_blank">节点选择面板 (#/proxies)</a>
+        </article>
+
+        <!-- 4. daed Card -->
+        <article class="hn-module" aria-labelledby="oracle-daed-title" id="card-daed">
+          <header class="hn-module-head">
+            <div class="hn-title-row">
+              <h2 id="oracle-daed-title">daed eBPF 透明代理</h2>
+              <span id="daed-badge" class="hn-status">
+                <span class="hn-dot" aria-hidden="true"></span>
+                <span id="daed-status-text">正常运行 (2.3 ms)</span>
+              </span>
             </div>
-            <div class="metric-row">
-              <span class="metric-label">本地 DNS 往返延时</span>
-              <span class="metric-value num accent" id="mos-latency">-- ms</span>
+            <p class="hn-subtitle">内核级透明重定向 · 端口 :2023</p>
+          </header>
+
+          <dl class="hn-rows">
+            <div class="hn-row">
+              <dt>WebUI 端点</dt>
+              <dd class="hn-mono" id="daed-endpoint-text">http://10.10.11.7:2023</dd>
             </div>
-            <div class="metric-row">
-              <span class="metric-label">进程物理内存 (RSS)</span>
-              <span class="metric-value num" id="mos-mem">-- MB</span>
+            <div class="hn-row">
+              <dt>内核虚拟网卡</dt>
+              <dd class="hn-good">dae0 (eBPF 直通)</dd>
             </div>
-            <div class="metric-row">
-              <span class="metric-label">运行日志健康状态</span>
-              <span class="metric-value" id="mos-health-badge">--</span>
+            <div class="hn-row">
+              <dt>物理绑定网卡</dt>
+              <dd>ens18 (总线接管)</dd>
             </div>
-            <div id="mos-alert-box" class="soft-alert-box">
-              <div class="soft-alert-title">
-                <span>⚠️</span>
-                <span>最近上游告警</span>
+            <div class="hn-row">
+              <dt>进程物理内存 (RSS)</dt>
+              <dd id="daed-mem">157 MB</dd>
+            </div>
+            <div class="hn-row">
+              <dt>分流机制</dt>
+              <dd>eBPF 内核网络协议栈劫持</dd>
+            </div>
+            <div class="hn-row">
+              <dt>拓扑职能</dt>
+              <dd>全屋流量透明送入 Sing-box</dd>
+            </div>
+          </dl>
+
+          <div class="hn-card-space"></div>
+          <a class="hn-action cursor-interaction" id="daed-ui-link" href="http://10.10.11.8:2023" target="_blank">打开 daed 控制台</a>
+        </article>
+
+        <!-- 5. Debian Card -->
+        <article class="hn-module" aria-labelledby="oracle-debian-title" id="card-debian">
+          <header class="hn-module-head">
+            <div class="hn-title-row">
+              <h2 id="oracle-debian-title">Debian 旁路由底座</h2>
+              <span id="ha-badge" class="hn-status">
+                <span class="hn-dot" aria-hidden="true"></span>
+                <span id="ha-status-text">MASTER 主机</span>
+              </span>
+            </div>
+            <p class="hn-subtitle" id="host-sub-text">系统宿主与高可用集群 (10.10.11.7)</p>
+          </header>
+
+          <dl class="hn-rows">
+            <div class="hn-row">
+              <dt>Keepalived VIP 角色</dt>
+              <dd class="hn-good" id="ha-role">MASTER (当前接管 VIP)</dd>
+            </div>
+            <div class="hn-row">
+              <dt>宿主 Uptime</dt>
+              <dd id="host-uptime">13时 4分</dd>
+            </div>
+            <div class="hn-row">
+              <dt>系统负载 (LoadAvg)</dt>
+              <dd id="host-load">0.01</dd>
+            </div>
+          </dl>
+
+          <!-- Resource rows for RAM and Disk -->
+          <div class="hn-resource-row">
+            <dl>
+              <div class="hn-row">
+                <dt>内存分配</dt>
+                <dd id="host-mem">656 MB / 3.8 GB (16.8%)</dd>
               </div>
-              <div class="soft-alert-content" id="mos-alert-msg"></div>
+            </dl>
+            <div class="hn-track" role="meter" aria-label="内存分配" aria-valuemin="0" aria-valuemax="100">
+              <div class="hn-fill" id="host-mem-bar" style="width: 16.8%"></div>
             </div>
           </div>
-        </div>
 
-        <div class="card-footer">
-          <button class="btn btn-primary" onclick="openMosdnsLogs()">查看运行日志 (最近60条)</button>
-        </div>
+          <div class="hn-resource-row">
+            <dl>
+              <div class="hn-row">
+                <dt>磁盘可用</dt>
+                <dd id="host-disk">7.7 GB / 30.4 GB (25.4%)</dd>
+              </div>
+            </dl>
+            <div class="hn-track" role="meter" aria-label="磁盘可用" aria-valuemin="0" aria-valuemax="100">
+              <div class="hn-fill" id="host-disk-bar" style="width: 25.4%"></div>
+            </div>
+          </div>
+
+          <div class="hn-card-space"></div>
+          <a class="hn-action cursor-interaction" href="https://10.10.11.2:8006" target="_blank">PVE 9 宿主机管理 (8006)</a>
+        </article>
+
       </div>
 
-      <!-- 3. sing-box Card -->
-      <div class="card" id="card-singbox">
-        <div>
-          <div class="card-head">
-            <div class="card-title-box">
-              <h2>Sing-box 出海内核</h2>
-              <p>Clash-API 协议栈 · 端口 :9090</p>
-            </div>
-            <div id="sb-badge" class="status-pill pill-positive">
-              <span class="pulse-dot pulse-green"></span>
-              <span id="sb-status-text">检测中</span>
-            </div>
-          </div>
+      <!-- Diagnostic Tools Tray -->
+      <section class="hn-tools" aria-labelledby="oracle-tools-title">
+        <h3 id="oracle-tools-title">常用网络诊断与分析工具</h3>
+        <div class="hn-tool-grid">
+          <!-- 1. Speedtest -->
+          <a class="hn-tool cursor-interaction" href="https://www.speedtest.net/" target="_blank">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="10"/>
+              <path d="m14.31 8 5.74 9.94"/>
+              <path d="M9.69 8h11.48"/>
+              <path d="m7.38 12 5.74-9.94"/>
+              <path d="M9.69 16 3.95 6.06"/>
+              <path d="M14.31 16H2.83"/>
+              <path d="m16.62 12-5.74 9.94"/>
+            </svg>
+            <span>Speedtest 测速</span>
+          </a>
 
-          <div class="metrics-table">
-            <div class="metric-row">
-              <span class="metric-label">当前出海选路</span>
-              <span class="metric-value accent" id="sb-route" style="max-width:180px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">--</span>
-            </div>
-            <div class="metric-row">
-              <span class="metric-label">主力线路当前协议</span>
-              <span class="metric-value num" style="color:var(--positive)" id="sb-p-node">--</span>
-            </div>
-            <div class="metric-row">
-              <span class="metric-label">备用线路当前协议</span>
-              <span class="metric-value num" style="color:var(--accent)" id="sb-b-node">--</span>
-            </div>
-            <div class="metric-row">
-              <span class="metric-label">故障节点检测</span>
-              <span class="metric-value num" id="sb-failed-node" style="max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">0 个 (全协议正常)</span>
-            </div>
-            <div class="metric-row">
-              <span class="metric-label">活动连接与内存</span>
-              <span class="metric-value num" id="sb-conns">0 条</span>
-            </div>
-          </div>
+          <!-- 2. DNS Leak -->
+          <a class="hn-tool cursor-interaction" href="https://ipleak.net/" target="_blank">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/>
+              <path d="m9 12 2 2 4-4"/>
+            </svg>
+            <span>DNS 泄漏检测</span>
+          </a>
+
+          <!-- 3. IP Info -->
+          <a class="hn-tool cursor-interaction" href="https://ipinfo.io/" target="_blank">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="10"/>
+              <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/>
+              <path d="M2 12h20"/>
+            </svg>
+            <span>IP 归属与纯净度</span>
+          </a>
+
+          <!-- 4. Netflix Fast -->
+          <a class="hn-tool cursor-interaction" href="https://fast.com/" target="_blank">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"/>
+            </svg>
+            <span>Netflix Fast 测速</span>
+          </a>
+
+          <!-- 5. Ping.pe -->
+          <a class="hn-tool cursor-interaction" href="https://ping.pe/" target="_blank">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2"/>
+            </svg>
+            <span>全球 Ping.pe 路由</span>
+          </a>
+
+          <!-- 6. PVE 9 -->
+          <a class="hn-tool cursor-interaction" href="https://10.10.11.2:8006" target="_blank">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect width="20" height="8" x="2" y="2" rx="2" ry="2"/>
+              <rect width="20" height="8" x="2" y="14" rx="2" ry="2"/>
+              <line x1="6" x2="6.01" y1="6" y2="6"/>
+              <line x1="6" x2="6.01" y1="18" y2="18"/>
+            </svg>
+            <span>PVE 9 虚拟化底座</span>
+          </a>
         </div>
+      </section>
+    </main>
 
-        <div class="card-footer">
-          <!-- Directly opens proxies view -->
-          <a class="btn btn-primary" id="sb-proxies-link" href="http://10.10.11.8:9090/ui/#/proxies" target="_blank">节点选择面板 (#/proxies)</a>
-        </div>
-      </div>
-
-      <!-- 4. daed Card -->
-      <div class="card" id="card-daed">
-        <div>
-          <div class="card-head">
-            <div class="card-title-box">
-              <h2>daed eBPF 透明代理</h2>
-              <p>内核级透明重定向 · 端口 :2023</p>
-            </div>
-            <div id="daed-badge" class="status-pill pill-positive">
-              <span class="pulse-dot pulse-green"></span>
-              <span id="daed-status-text">检测中</span>
-            </div>
-          </div>
-
-          <div class="metrics-table">
-            <div class="metric-row">
-              <span class="metric-label">WebUI 端点</span>
-              <span class="metric-value num" id="daed-endpoint-text">http://10.10.11.8:2023</span>
-            </div>
-            <div class="metric-row">
-              <span class="metric-label">内核虚拟网卡</span>
-              <span class="metric-value num accent">dae0 (eBPF 直通)</span>
-            </div>
-            <div class="metric-row">
-              <span class="metric-label">物理绑定网卡</span>
-              <span class="metric-value num">ens18 (总线接管)</span>
-            </div>
-            <div class="metric-row">
-              <span class="metric-label">进程物理内存 (RSS)</span>
-              <span class="metric-value num" id="daed-mem">-- MB</span>
-            </div>
-            <div class="metric-row">
-              <span class="metric-label">分流机制</span>
-              <span class="metric-value">eBPF 内核网络协议栈劫持</span>
-            </div>
-            <div class="metric-row">
-              <span class="metric-label">拓扑职能</span>
-              <span class="metric-value">全屋流量透明送入 Sing-box</span>
-            </div>
+    <!-- Modal for MosDNS Logs -->
+    <div class="modal" id="modal-logs">
+      <div class="modal-box">
+        <div class="modal-head">
+          <div class="modal-title">MosDNS 运行日志 · 最近 60 条</div>
+          <div class="modal-actions">
+            <button class="modal-copy-btn" id="btn-copy-logs" onclick="copyMosdnsLogs()">📋 复制全部日志</button>
+            <button class="modal-close" onclick="closeMosdnsLogs()">&times;</button>
           </div>
         </div>
-
-        <div class="card-footer">
-          <a class="btn btn-primary" id="daed-ui-link" href="http://10.10.11.8:2023" target="_blank">打开 daed 控制台</a>
-        </div>
-      </div>
-
-      <!-- 5. Host & Keepalived Card -->
-      <div class="card" id="card-host">
-        <div>
-          <div class="card-head">
-            <div class="card-title-box">
-              <h2>Debian 旁路由底座</h2>
-              <p id="host-sub-text">系统宿主与高可用集群</p>
-            </div>
-            <div id="ha-badge" class="status-pill pill-positive">
-              <span class="pulse-dot pulse-green"></span>
-              <span id="ha-status-text">在线</span>
-            </div>
-          </div>
-
-          <div class="metrics-table">
-            <div class="metric-row">
-              <span class="metric-label">Keepalived VIP 角色</span>
-              <span class="metric-value num accent" id="ha-role">--</span>
-            </div>
-            <div class="metric-row">
-              <span class="metric-label">宿主 Uptime</span>
-              <span class="metric-value num" id="host-uptime">--</span>
-            </div>
-            <div class="metric-row">
-              <span class="metric-label">系统负载 (LoadAvg)</span>
-              <span class="metric-value num" id="host-load">--</span>
-            </div>
-            <div class="metric-row">
-              <span class="metric-label">内存分配</span>
-              <span class="metric-value num" id="host-mem">--</span>
-            </div>
-            <div class="bar-track"><div id="host-mem-bar" class="bar-fill" style="width: 0%"></div></div>
-
-            <div class="metric-row" style="margin-top:0.35rem;">
-              <span class="metric-label">磁盘可用</span>
-              <span class="metric-value num" id="host-disk">--</span>
-            </div>
-            <div class="bar-track"><div id="host-disk-bar" class="bar-fill" style="width: 0%"></div></div>
-          </div>
-        </div>
-
-        <div class="card-footer">
-          <a class="btn btn-primary" href="https://10.10.11.2:8006" target="_blank">PVE 9 宿主机管理 (8006)</a>
-        </div>
-      </div>
-
-    </div>
-
-    <!-- Diagnostic Tools Tray -->
-    <div class="tools-tray">
-      <div class="tray-title">常用网络诊断与分析工具</div>
-      <div class="tray-grid">
-        <a class="tray-link" href="https://www.speedtest.net/" target="_blank">
-          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.6 11.2a6.2 6.2 0 1 1 10.8 0"/><path d="M8 9.4 10.4 6.6"/><circle cx="8" cy="10.2" r="1.1"/></svg>
-          <span>Speedtest 测速</span>
-        </a>
-        <a class="tray-link" href="https://ipleak.net/" target="_blank">
-          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2.4 12.8 4.1v3.9c0 2.9-2.1 4.5-4.8 5.5-2.7-1-4.8-2.6-4.8-5.5V4.1L8 2.4Z"/><path d="m6 8 1.5 1.5L10.4 6.6"/></svg>
-          <span>DNS 泄漏检测</span>
-        </a>
-        <a class="tray-link" href="https://ipinfo.io/" target="_blank">
-          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="8" r="5.6"/><path d="M2.6 8h10.8"/><path d="M8 2.4c3.2 2.9 3.2 8.3 0 11.2-3.2-2.9-3.2-8.3 0-11.2Z"/></svg>
-          <span>IP 归属与纯净度</span>
-        </a>
-        <a class="tray-link" href="https://fast.com/" target="_blank">
-          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.2 1.8 4.2 9h3.4l-.8 5.2L12 7H8.5l.7-5.2Z"/></svg>
-          <span>Netflix Fast 测速</span>
-        </a>
-        <a class="tray-link" href="https://ping.pe/" target="_blank">
-          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1.8 8h2.4l1.5-4.2 2.1 8.4 1.7-5 1.2 2.8h3.5"/></svg>
-          <span>全球 Ping.pe 路由</span>
-        </a>
-        <a class="tray-link" href="https://10.10.11.2:8006" target="_blank">
-          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.2" y="3" width="11.6" height="5" rx="1.2"/><rect x="2.2" y="9.6" width="11.6" height="3.4" rx="1.2"/><path d="M4.4 5.4h.01M4.4 11.3h.01"/></svg>
-          <span>PVE 9 虚拟化底座</span>
-        </a>
+        <div class="modal-body" id="modal-log-body">正在载入日志...</div>
       </div>
     </div>
-  </main>
 
-  <!-- Modal for MosDNS Logs -->
-  <div class="modal" id="modal-logs">
-    <div class="modal-box">
-      <div class="modal-head">
-        <div class="modal-title">MosDNS 运行日志 · 最近 60 条</div>
-        <div class="modal-actions">
-          <button class="modal-copy-btn" id="btn-copy-logs" onclick="copyMosdnsLogs()">📋 复制全部日志</button>
-          <button class="modal-close" onclick="closeMosdnsLogs()">&times;</button>
-        </div>
-      </div>
-      <div class="modal-body" id="modal-log-body">正在载入日志...</div>
-    </div>
+    <!-- Footer -->
+    <footer class="hn-footer">
+      HomeNet Portal · 纯原生零开销监控架构
+    </footer>
   </div>
-
-  <footer>
-    HomeNet Portal · 纯原生零开销监控架构
-  </footer>
 
   <script>
     // Theme Management
@@ -1344,29 +1364,57 @@
     }
 
     function applyTheme(mode) {
-      const meta = document.querySelector('meta[name="color-scheme"]');
+      const meta = document.querySelector('meta[name="theme-color"]');
       const root = document.documentElement;
 
-      document.getElementById("theme-sys").classList.remove("active");
-      document.getElementById("theme-light").classList.remove("active");
-      document.getElementById("theme-dark").classList.remove("active");
+      const btnSys = document.getElementById("theme-sys");
+      const btnLight = document.getElementById("theme-light");
+      const btnDark = document.getElementById("theme-dark");
+
+      [btnSys, btnLight, btnDark].forEach(btn => {
+        if (btn) {
+          btn.classList.remove("active");
+          btn.setAttribute("aria-pressed", "false");
+        }
+      });
 
       if (mode === "light") {
         root.setAttribute("data-theme", "light");
-        if (meta) meta.content = "light";
-        document.getElementById("theme-light").classList.add("active");
+        root.setAttribute("data-appearance", "light");
+        if (meta) meta.content = "#f1efed";
+        if (btnLight) {
+          btnLight.classList.add("active");
+          btnLight.setAttribute("aria-pressed", "true");
+        }
       } else if (mode === "dark") {
         root.setAttribute("data-theme", "dark");
-        if (meta) meta.content = "dark";
-        document.getElementById("theme-dark").classList.add("active");
+        root.setAttribute("data-appearance", "dark");
+        if (meta) meta.content = "#1c1917";
+        if (btnDark) {
+          btnDark.classList.add("active");
+          btnDark.setAttribute("aria-pressed", "true");
+        }
       } else {
         root.removeAttribute("data-theme");
-        if (meta) meta.content = "light dark";
-        document.getElementById("theme-sys").classList.add("active");
+        root.removeAttribute("data-appearance");
+        const systemDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+        if (meta) meta.content = systemDark ? "#1c1917" : "#f1efed";
+        if (btnSys) {
+          btnSys.classList.add("active");
+          btnSys.setAttribute("aria-pressed", "true");
+        }
       }
     }
 
     applyTheme(savedTheme);
+
+    window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", (e) => {
+      const cur = localStorage.getItem("homenet-theme") || "system";
+      if (cur === "system") {
+        const meta = document.querySelector('meta[name="theme-color"]');
+        if (meta) meta.content = e.matches ? "#1c1917" : "#f1efed";
+      }
+    });
 
     // Dynamic Host Links & Titles
     function initDynamicHostLinks() {
@@ -1382,7 +1430,7 @@
     }
     initDynamicHostLinks();
 
-    // Live Data Polling
+    // Live Data Polling (every 3 seconds)
     async function fetchStatus() {
       try {
         const resp = await fetch('/api/status');
@@ -1408,13 +1456,13 @@
             const pDot = document.getElementById('vps-p-dot');
             const pLat = document.getElementById('vps-p-lat');
             if (p.online) {
-              pDot.className = 'pulse-dot pulse-green';
+              pDot.style.background = 'var(--hn-success-accent)';
               pLat.innerText = `${p.latency} ms`;
-              pLat.style.color = 'var(--positive)';
+              pLat.className = 'hn-latency';
             } else {
-              pDot.className = 'pulse-dot pulse-red';
+              pDot.style.background = 'var(--hn-brand)';
               pLat.innerText = '超时';
-              pLat.style.color = 'var(--negative)';
+              pLat.style.color = 'var(--hn-brand)';
             }
           }
 
@@ -1424,13 +1472,13 @@
             const bDot = document.getElementById('vps-b-dot');
             const bLat = document.getElementById('vps-b-lat');
             if (b.online) {
-              bDot.className = 'pulse-dot pulse-green';
+              bDot.style.background = 'var(--hn-success-accent)';
               bLat.innerText = `${b.latency} ms`;
-              bLat.style.color = 'var(--positive)';
+              bLat.className = 'hn-latency';
             } else {
-              bDot.className = 'pulse-dot pulse-red';
+              bDot.style.background = 'var(--hn-brand)';
               bLat.innerText = '超时';
-              bLat.style.color = 'var(--negative)';
+              bLat.style.color = 'var(--hn-brand)';
             }
           }
         }
@@ -1448,7 +1496,7 @@
           const rosText = document.getElementById('ros-status-text');
 
           if (r.online) {
-            rosBadge.className = 'status-pill pill-positive';
+            rosBadge.className = 'hn-status';
             rosText.innerText = `Winbox 在线 (${r.ping_ms || 0.2} ms)`;
             const utElem = document.getElementById('ros-uptime');
             if (utElem) utElem.innerText = `8291 就绪 (${r.ping_ms || 0.2} ms)`;
@@ -1474,7 +1522,7 @@
               }
             }
           } else {
-            rosBadge.className = 'status-pill pill-negative';
+            rosBadge.className = 'hn-status hn-status-offline';
             rosText.innerText = '离线 / 超时';
           }
         }
@@ -1486,10 +1534,10 @@
           const mosText = document.getElementById('mos-status-text');
 
           if (m.service_active) {
-            mosBadge.className = 'status-pill pill-positive';
+            mosBadge.className = 'hn-status';
             mosText.innerText = '服务正常';
           } else {
-            mosBadge.className = 'status-pill pill-negative';
+            mosBadge.className = 'hn-status hn-status-offline';
             mosText.innerText = '服务停止';
           }
 
@@ -1500,10 +1548,10 @@
           const mosHealth = document.getElementById('mos-health-badge');
           const alertBox = document.getElementById('mos-alert-box');
           if (m.errors_count === 0 && m.warns_count === 0) {
-            mosHealth.innerHTML = '<span class="status-pill pill-positive">0 错误 / 0 警告</span>';
+            mosHealth.innerHTML = '<span class="hn-good">0 错误 / 0 警告</span>';
             alertBox.style.display = 'none';
           } else {
-            mosHealth.innerHTML = `<span class="status-pill pill-warning">${m.errors_count} 错误 / ${m.warns_count} 警告</span>`;
+            mosHealth.innerHTML = `<span class="hn-warning-badge">${m.errors_count} 错误 / ${m.warns_count} 警告</span>`;
             if (m.latest_alert) {
               alertBox.style.display = 'block';
               let displayMsg = m.latest_alert;
@@ -1519,6 +1567,8 @@
                 }
               } catch (_) {}
               document.getElementById('mos-alert-msg').innerText = displayMsg;
+            } else {
+              alertBox.style.display = 'none';
             }
           }
         }
@@ -1530,10 +1580,10 @@
           const sbText = document.getElementById('sb-status-text');
 
           if (s.online) {
-            sbBadge.className = 'status-pill pill-positive';
+            sbBadge.className = 'hn-status';
             sbText.innerText = '核心在线';
           } else {
-            sbBadge.className = 'status-pill pill-negative';
+            sbBadge.className = 'hn-status hn-status-offline';
             sbText.innerText = '核心未响应';
           }
 
@@ -1555,10 +1605,10 @@
           if (fEl) {
             fEl.innerText = s.failed_text || '0 个 (全协议正常)';
             if (s.failed_count > 0) {
-              fEl.style.color = 'var(--warning)';
+              fEl.style.color = 'var(--hn-warning-ink)';
               fEl.style.fontWeight = '600';
             } else {
-              fEl.style.color = 'var(--positive)';
+              fEl.style.color = 'var(--hn-forest)';
               fEl.style.fontWeight = 'normal';
             }
           }
@@ -1573,12 +1623,12 @@
           const daText = document.getElementById('daed-status-text');
 
           if (da.online) {
-            daBadge.className = 'status-pill pill-positive';
+            daBadge.className = 'hn-status';
             daText.innerText = `正常运行 (${da.latency || 0.5} ms)`;
             const memEl = document.getElementById('daed-mem');
             if (memEl) memEl.innerText = (da.memory_mb || 0) + ' MB';
           } else {
-            daBadge.className = 'status-pill pill-negative';
+            daBadge.className = 'hn-status hn-status-offline';
             daText.innerText = '连接超时';
             const memEl = document.getElementById('daed-mem');
             if (memEl) memEl.innerText = '-- MB';
@@ -1600,10 +1650,10 @@
           const ha = d.keepalived;
           document.getElementById('ha-role').innerText = ha.role_text || '--';
           if (ha.is_master) {
-            document.getElementById('ha-badge').className = 'status-pill pill-positive';
+            document.getElementById('ha-badge').className = 'hn-status';
             document.getElementById('ha-status-text').innerText = 'MASTER 主机';
           } else {
-            document.getElementById('ha-badge').className = 'status-pill pill-neutral';
+            document.getElementById('ha-badge').className = 'hn-status hn-status-backup';
             document.getElementById('ha-status-text').innerText = 'BACKUP 备机';
           }
         }
@@ -1666,7 +1716,7 @@
       document.body.removeChild(ta);
     }
 
-    // 键盘辅助：当弹窗开启时，按 Ctrl+A / Cmd+A 仅全选日志区域，按 Esc 关闭弹窗
+    // Keyboard Shortcuts
     document.addEventListener('keydown', function(e) {
       const modal = document.getElementById('modal-logs');
       if (modal && modal.style.display === 'flex') {
@@ -1705,13 +1755,7 @@
       }, duration);
     }
 
-    function copyIp(ip) {
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(ip).catch(() => {});
-      }
-      showToast(`已将 ${ip} 复制至剪贴板`);
-    }
-
+    // Initial Fetch & Polling interval
     fetchStatus();
     setInterval(fetchStatus, 3000);
   </script>
