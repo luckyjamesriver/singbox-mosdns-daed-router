@@ -25,6 +25,7 @@
     /* ==========================================================================
        HomeNet Portal · Oracle Inspired Design System
        暖灰与白色表面 + 金棕色主按钮及状态标签 + 明亮绿色状态指示
+       精简字体规范（相比此前缩小约两号，去臃肿，增强精致度与信息呼吸感）
        ========================================================================== */
     :root {
       /* 浅色模式 (Light Mode) */
@@ -156,8 +157,8 @@
       background: var(--hn-page);
       color: var(--hn-ink);
       font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
-      font-size: 14px;
-      line-height: 1.5;
+      font-size: 13px;
+      line-height: 1.45;
       letter-spacing: 0;
       min-height: 100vh;
       display: flex;
@@ -177,7 +178,7 @@
 
     button:focus-visible, a:focus-visible {
       outline: 2px solid var(--hn-focus);
-      outline-offset: 3px;
+      outline-offset: 2px;
     }
 
     .num,
@@ -209,8 +210,8 @@
     .hn-topbar {
       display: flex;
       align-items: center;
-      gap: 24px;
-      padding: 15px 26px;
+      gap: 18px;
+      padding: 10px 24px;
       background: var(--hn-canvas);
       border-bottom: 1px solid var(--hn-hairline);
       position: sticky;
@@ -221,36 +222,36 @@
     .hn-brand {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
       flex: 0 0 auto;
       min-width: 0;
     }
 
     .hn-mark {
-      width: 38px;
-      height: 38px;
+      width: 32px;
+      height: 32px;
       display: grid;
       place-items: center;
-      border-radius: 9px;
+      border-radius: 7px;
       background: var(--hn-brand);
       color: #ffffff;
-      font-size: 13px;
+      font-size: 11px;
       font-weight: 650;
       letter-spacing: 0.02em;
     }
 
     .hn-brand h1 {
-      font-size: 18px;
-      line-height: 1.3;
-      font-weight: 650;
+      font-size: 15px;
+      line-height: 1.25;
+      font-weight: 600;
       color: var(--hn-ink);
       white-space: nowrap;
     }
 
     .hn-brand p {
-      margin-top: 3px;
+      margin-top: 1px;
       font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
-      font-size: 12px;
+      font-size: 11px;
       color: var(--hn-muted);
       white-space: nowrap;
     }
@@ -259,7 +260,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 9px;
+      gap: 8px;
       flex: 1;
       min-width: 0;
     }
@@ -267,13 +268,13 @@
     .hn-top-metric {
       display: flex;
       align-items: center;
-      gap: 9px;
-      padding: 11px 12px;
+      gap: 7px;
+      padding: 7px 10px;
       border: 1px solid var(--hn-hairline);
-      border-radius: 8px;
+      border-radius: 6px;
       background: var(--hn-soft);
       white-space: nowrap;
-      font-size: 13px;
+      font-size: 11.5px;
       transition: border-color 0.15s ease;
     }
 
@@ -284,82 +285,83 @@
     .hn-top-label {
       display: inline-flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
       color: var(--hn-muted);
     }
 
     .hn-dot {
       display: inline-block;
-      width: 6px;
-      height: 6px;
+      width: 5px;
+      height: 5px;
       flex-shrink: 0;
       border-radius: 50%;
       background: var(--hn-success-accent);
     }
 
     .hn-top-label .hn-dot {
-      width: 7px;
-      height: 7px;
-      outline: 3px solid var(--hn-success-bg);
+      width: 6px;
+      height: 6px;
+      outline: 2px solid var(--hn-success-bg);
     }
 
     .hn-ip {
       font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
-      font-size: 13px;
+      font-size: 11.5px;
       font-weight: 600;
       color: var(--hn-ink);
     }
 
     .hn-location {
       color: var(--hn-muted);
-      font-size: 11px;
+      font-size: 10.5px;
     }
 
     .hn-latency {
       color: var(--hn-forest);
-      font-size: 11px;
+      font-size: 10.5px;
       font-weight: 600;
     }
 
     .hn-top-speed {
       font-weight: 550;
+      font-size: 11.5px;
     }
 
     .hn-triangle {
-      font-size: 10px;
+      font-size: 9px;
       color: var(--hn-success-accent);
       display: inline-block;
     }
 
     .hn-sep {
       color: var(--hn-field);
-      margin: 0 4px;
+      margin: 0 3px;
     }
 
     .hn-top-controls {
       display: flex;
       align-items: center;
-      gap: 9px;
+      gap: 8px;
       flex-shrink: 0;
     }
 
     .hn-theme {
       display: flex;
       align-items: center;
-      padding: 3px;
+      padding: 2px;
       border: 1px solid var(--hn-hairline);
-      border-radius: 8px;
+      border-radius: 6px;
       background: var(--hn-tint);
     }
 
     .hn-theme button {
       color: var(--hn-muted);
       border: 0;
-      border-radius: 5px;
+      border-radius: 4px;
       background: transparent;
-      padding: 6px 10px;
-      font-size: 12px;
-      line-height: 1.5;
+      padding: 4px 8px;
+      font-size: 11px;
+      line-height: 1.4;
       transition: all 0.15s ease;
       white-space: nowrap;
     }
@@ -375,12 +377,12 @@
     .hn-refresh {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
+      gap: 5px;
       border: 1px solid var(--hn-hairline);
-      border-radius: 8px;
+      border-radius: 6px;
       color: var(--hn-muted);
-      padding: 8px 12px;
-      font-size: 12px;
+      padding: 5px 9px;
+      font-size: 11px;
       white-space: nowrap;
     }
 
@@ -391,7 +393,7 @@
 
     /* 主体区域 */
     .hn-main {
-      padding: 28px 26px 24px;
+      padding: 18px 22px 20px;
       flex: 1;
       width: 100%;
       max-width: 1920px;
@@ -401,18 +403,18 @@
     .hn-modules {
       display: grid;
       grid-template-columns: repeat(5, minmax(0, 1fr));
-      gap: 20px;
+      gap: 14px;
       align-items: stretch;
     }
 
     /* 模块卡片 */
     .hn-module {
       min-width: 0;
-      min-height: 510px;
+      min-height: 440px;
       background: var(--hn-canvas);
       border: 1px solid var(--hn-hairline);
-      border-radius: 12px;
-      padding: 24px 22px 22px;
+      border-radius: 10px;
+      padding: 18px 16px 16px;
       display: flex;
       flex-direction: column;
       transition: border-color 0.18s ease;
@@ -422,43 +424,59 @@
       border-color: var(--hn-field);
     }
 
-    /* 标题区与留白 */
+    /* 标题区：状态在最顶行，标题与副标题在下方分行显示 */
     .hn-module-head {
-      padding-bottom: 19px;
-      margin-bottom: 24px;
+      padding-bottom: 12px;
+      margin-bottom: 14px;
       border-bottom: 1px solid var(--hn-divider);
     }
 
-    .hn-title-row {
+    /* 状态放置在最顶行 */
+    .hn-status-row {
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      flex-wrap: wrap;
+      justify-content: flex-start;
+      margin-bottom: 7px;
     }
 
     .hn-module h2 {
       color: var(--hn-ink);
-      font-size: 18px;
-      line-height: 1.4;
-      font-weight: 650;
+      font-size: 15px;
+      line-height: 1.35;
+      font-weight: 600;
       letter-spacing: -0.01em;
+    }
+
+    .hn-subtitle {
+      color: var(--hn-muted);
+      font-size: 11.5px;
+      line-height: 1.4;
+      margin-top: 3px;
+      overflow-wrap: anywhere;
     }
 
     /* 状态标签：与主按钮使用相同的 #A77C37 背景和边框，白字 600，在线圆点 #22C55E */
     .hn-status {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
-      padding: 3px 8px;
-      border-radius: 6px;
+      gap: 5px;
+      padding: 2px 7px;
+      border-radius: 5px;
       border: 1px solid var(--hn-action);
       color: var(--hn-on-action);
       background: var(--hn-action);
-      font-size: 12px;
-      line-height: 1.5;
+      font-size: 11px;
+      line-height: 1.45;
       font-weight: 600;
       white-space: nowrap;
+    }
+
+    .hn-status .hn-dot {
+      width: 5px;
+      height: 5px;
+      flex-shrink: 0;
+      border-radius: 50%;
+      background: var(--hn-success-accent);
     }
 
     .hn-status-offline {
@@ -479,15 +497,7 @@
       background: var(--hn-muted) !important;
     }
 
-    .hn-subtitle {
-      color: var(--hn-muted);
-      font-size: 13px;
-      line-height: 1.5;
-      margin-top: 5px;
-      overflow-wrap: anywhere;
-    }
-
-    /* 数据行 */
+    /* 数据行：紧凑舒适，行高适中 */
     .hn-rows {
       width: 100%;
     }
@@ -496,9 +506,9 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      gap: 12px;
-      min-height: 53px;
-      padding: 14px 0;
+      gap: 8px;
+      min-height: 38px;
+      padding: 8px 0;
       border-bottom: 1px solid var(--hn-divider);
     }
 
@@ -508,8 +518,8 @@
 
     .hn-row dt {
       color: var(--hn-label);
-      font-size: 14px;
-      line-height: 1.5;
+      font-size: 12px;
+      line-height: 1.4;
       font-weight: 400;
       min-width: 0;
       flex-shrink: 0;
@@ -517,8 +527,8 @@
 
     .hn-row dd {
       color: var(--hn-ink);
-      font-size: 14px;
-      line-height: 1.5;
+      font-size: 12.5px;
+      line-height: 1.4;
       font-weight: 550;
       text-align: right;
       min-width: 0;
@@ -544,61 +554,62 @@
 
     .hn-warning-badge {
       display: inline-block;
-      padding: 3px 8px;
+      padding: 2px 6px;
       border: 1px solid var(--hn-gold-soft);
-      border-radius: 6px;
+      border-radius: 4px;
       background: var(--hn-warning-bg);
       color: var(--hn-warning-ink);
-      font-size: 12px;
-      line-height: 1.5;
+      font-size: 11px;
+      line-height: 1.45;
       font-weight: 600;
       white-space: nowrap;
     }
 
     /* MosDNS 日志块 */
     .hn-logbox {
-      margin-top: 14px;
-      padding: 12px 13px;
+      margin-top: 10px;
+      padding: 9px 10px;
       border: 1px solid var(--hn-gold-soft);
-      border-radius: 8px;
+      border-radius: 6px;
       background: var(--hn-warning-bg);
     }
 
     .hn-log-title {
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 5px;
       color: var(--hn-warning-ink);
-      font-size: 12px;
-      line-height: 1.5;
+      font-size: 11px;
+      line-height: 1.4;
       font-weight: 550;
     }
 
     .hn-log-title svg {
-      width: 13px;
-      height: 13px;
+      width: 12px;
+      height: 12px;
       flex-shrink: 0;
     }
 
     .hn-logbox pre {
-      margin: 6px 0 0;
+      margin: 4px 0 0;
       color: var(--hn-label);
       font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
-      font-size: 13px;
-      line-height: 1.6;
+      font-size: 11px;
+      line-height: 1.5;
       white-space: pre-wrap;
       overflow-wrap: anywhere;
     }
 
     /* 资源横条 (Debian) */
     .hn-resource-row {
-      padding-bottom: 12px;
+      padding-bottom: 8px;
       border-bottom: 1px solid var(--hn-divider);
     }
 
     .hn-resource-row .hn-row {
       border: 0;
-      padding-bottom: 10px;
+      padding-bottom: 6px;
+      min-height: 32px;
     }
 
     .hn-resource-row:last-child {
@@ -607,26 +618,26 @@
     }
 
     .hn-track {
-      height: 5px;
-      border-radius: 3px;
+      height: 4px;
+      border-radius: 2px;
       background: var(--hn-track);
       overflow: hidden;
     }
 
     .hn-fill {
       height: 100%;
-      border-radius: 3px;
+      border-radius: 2px;
       background: var(--hn-success-accent);
       transition: width 0.3s ease;
     }
 
     .hn-resource-row + .hn-resource-row {
-      margin-top: 14px;
+      margin-top: 8px;
     }
 
     /* 弹性卡片留白 */
     .hn-card-space {
-      min-height: 23px;
+      min-height: 16px;
       flex: 1;
     }
 
@@ -636,15 +647,15 @@
       align-items: center;
       justify-content: center;
       width: 100%;
-      min-height: 46px;
+      min-height: 38px;
       border: 1px solid transparent;
-      border-radius: 7px;
+      border-radius: 6px;
       background: var(--hn-action);
       color: var(--hn-on-action);
-      padding: 11px 12px;
+      padding: 8px 10px;
       margin-top: auto;
-      font-size: 14px;
-      line-height: 1.5;
+      font-size: 12.5px;
+      line-height: 1.45;
       font-weight: 600;
       text-align: center;
       text-decoration: none;
@@ -658,41 +669,41 @@
 
     /* 底部工具区 */
     .hn-tools {
-      margin-top: 24px;
-      padding: 19px 20px 20px;
+      margin-top: 16px;
+      padding: 14px 16px 16px;
       border: 1px solid var(--hn-hairline);
-      border-radius: 12px;
+      border-radius: 10px;
       background: var(--hn-canvas);
     }
 
     .hn-tools h3 {
       color: var(--hn-muted);
-      font-size: 12px;
-      line-height: 1.5;
-      font-weight: 550;
-      margin-bottom: 13px;
+      font-size: 11px;
+      line-height: 1.4;
+      font-weight: 600;
+      margin-bottom: 10px;
     }
 
     .hn-tool-grid {
       display: grid;
       grid-template-columns: repeat(6, minmax(0, 1fr));
-      gap: 12px;
+      gap: 9px;
     }
 
     .hn-tool {
       display: flex;
       align-items: center;
       justify-content: flex-start;
-      gap: 10px;
+      gap: 8px;
       min-width: 0;
-      min-height: 47px;
-      padding: 12px 15px;
+      min-height: 38px;
+      padding: 8px 12px;
       border: 1px solid var(--hn-hairline);
-      border-radius: 8px;
+      border-radius: 6px;
       background: var(--hn-tint);
       color: var(--hn-ink);
-      font-size: 14px;
-      line-height: 1.5;
+      font-size: 12px;
+      line-height: 1.45;
       text-align: left;
       font-weight: 500;
       text-decoration: none;
@@ -706,8 +717,8 @@
 
     .hn-tool svg {
       color: var(--hn-muted);
-      width: 16px;
-      height: 16px;
+      width: 14px;
+      height: 14px;
       flex-shrink: 0;
       transition: color 0.15s ease;
     }
@@ -719,13 +730,13 @@
     /* 页脚 */
     .hn-footer {
       margin-top: auto;
-      padding: 20px 24px;
+      padding: 16px 20px;
       border-top: 1px solid var(--hn-hairline);
       text-align: center;
       color: var(--hn-muted);
       font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
-      font-size: 12px;
-      line-height: 1.5;
+      font-size: 11px;
+      line-height: 1.4;
     }
 
     /* 日志弹窗 */
@@ -744,7 +755,7 @@
     .modal-box {
       background: var(--hn-canvas);
       border: 1px solid var(--hn-hairline);
-      border-radius: 14px;
+      border-radius: 12px;
       width: 100%;
       max-width: 860px;
       max-height: 82vh;
@@ -758,13 +769,13 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 14px 20px;
+      padding: 12px 18px;
       border-bottom: 1px solid var(--hn-divider);
     }
 
     .modal-title {
       font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 600;
       color: var(--hn-ink);
     }
@@ -772,15 +783,15 @@
     .modal-actions {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
     }
 
     .modal-copy-btn {
       display: inline-flex;
       align-items: center;
       gap: 5px;
-      padding: 6px 12px;
-      font-size: 12px;
+      padding: 5px 10px;
+      font-size: 11.5px;
       font-weight: 500;
       color: var(--hn-ink);
       background: var(--hn-tint);
@@ -801,10 +812,10 @@
       background: none;
       border: none;
       color: var(--hn-muted);
-      font-size: 22px;
+      font-size: 20px;
       line-height: 1;
-      padding: 4px 6px;
-      border-radius: 6px;
+      padding: 3px 6px;
+      border-radius: 4px;
       transition: color 0.15s ease;
     }
 
@@ -813,18 +824,18 @@
     }
 
     .modal-body {
-      padding: 16px 20px;
+      padding: 14px 18px;
       overflow-y: auto;
       font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
-      font-size: 12px;
-      line-height: 1.65;
+      font-size: 11.5px;
+      line-height: 1.6;
       background: #1c1917;
       color: #a8d8bc;
       white-space: pre-wrap;
       word-break: break-all;
     }
 
-    .modal-body::-webkit-scrollbar { width: 10px; }
+    .modal-body::-webkit-scrollbar { width: 8px; }
     .modal-body::-webkit-scrollbar-thumb {
       background: #332f2b;
       border-radius: 999px;
@@ -845,9 +856,9 @@
       color: var(--hn-canvas);
       border: 1px solid var(--hn-hairline);
       box-shadow: 0 12px 28px -8px rgba(0, 0, 0, 0.35);
-      padding: 9px 15px;
-      border-radius: 8px;
-      font-size: 12px;
+      padding: 8px 14px;
+      border-radius: 7px;
+      font-size: 11.5px;
       font-weight: 500;
       opacity: 0;
       transform: translateY(10px);
@@ -865,85 +876,76 @@
 
     /* ==========================================================================
        响应式断点 (同时支持 CSS Container Query 与 Viewport Media Query)
-       1760px, 1480px, 1100px, 800px, 540px
        ========================================================================== */
     @container (max-width: 1760px), screen and (max-width: 1760px) {
-      .hn-topbar { gap: 16px; padding-left: 22px; padding-right: 22px; }
-      .hn-brand p { font-size: 11px; }
-      .hn-top-metric { gap: 7px; padding: 10px 9px; font-size: 12px; }
-      .hn-ip { font-size: 12px; }
-      .hn-main { padding-left: 22px; padding-right: 22px; }
-      .hn-modules { gap: 16px; }
-      .hn-module { padding-left: 18px; padding-right: 18px; }
-      .hn-module h2 { font-size: 16px; }
-      .hn-status { font-size: 11px; }
-      .hn-row { gap: 8px; }
-      .hn-row dt, .hn-row dd { font-size: 13px; }
+      .hn-topbar { gap: 14px; padding-left: 18px; padding-right: 18px; }
+      .hn-main { padding-left: 18px; padding-right: 18px; }
+      .hn-modules { gap: 12px; }
+      .hn-module { padding: 16px 14px 14px; }
+      .hn-module h2 { font-size: 14px; }
+      .hn-status { font-size: 10.5px; }
+      .hn-row dt { font-size: 11.5px; }
+      .hn-row dd { font-size: 12px; }
     }
 
     @container (max-width: 1480px), screen and (max-width: 1480px) {
       .hn-topbar { flex-wrap: wrap; }
       .hn-brand { flex: 1; }
       .hn-top-metrics { order: 3; flex-basis: 100%; justify-content: flex-start; flex-wrap: wrap; }
-      .hn-module-head { min-height: 106px; }
-      .hn-title-row { align-items: flex-start; flex-direction: column; gap: 8px; }
-      .hn-row { flex-wrap: wrap; row-gap: 4px; min-height: 67px; padding: 12px 0; }
+      .hn-row { flex-wrap: wrap; row-gap: 2px; min-height: 48px; padding: 7px 0; }
       .hn-row dd { margin-left: auto; }
       .hn-flow { white-space: normal; }
-      .hn-action { font-size: 13px; }
-      .hn-tool { font-size: 13px; padding: 10px 12px; }
-      .hn-shell { min-height: 980px; }
+      .hn-action { font-size: 12px; min-height: 36px; }
+      .hn-tool { font-size: 11.5px; padding: 7px 10px; min-height: 36px; }
     }
 
     @container (max-width: 1100px), screen and (max-width: 1100px) {
-      .hn-main { padding: 22px 16px; }
-      .hn-modules { gap: 10px; }
-      .hn-module { padding: 18px 12px 16px; }
-      .hn-module h2 { font-size: 15px; }
-      .hn-subtitle { font-size: 12px; }
-      .hn-row dt { font-size: 12px; }
-      .hn-row dd { font-size: 12px; }
-      .hn-status { padding: 3px 5px; gap: 4px; white-space: normal; }
-      .hn-logbox { padding: 10px; }
-      .hn-logbox pre { font-size: 12px; }
-      .hn-warning-badge { padding: 3px 5px; font-size: 11px; }
-      .hn-action { font-size: 12px; padding: 10px 5px; }
-      .hn-tools { padding: 17px 14px; }
-      .hn-tool-grid { gap: 8px; }
-      .hn-tool { font-size: 12px; padding: 10px 8px; gap: 7px; }
+      .hn-main { padding: 16px 12px; }
+      .hn-modules { gap: 9px; }
+      .hn-module { padding: 14px 10px 12px; }
+      .hn-module h2 { font-size: 13.5px; }
+      .hn-subtitle { font-size: 11px; }
+      .hn-row dt { font-size: 11px; }
+      .hn-row dd { font-size: 11.5px; }
+      .hn-status { padding: 2px 5px; font-size: 10px; }
+      .hn-logbox { padding: 8px; }
+      .hn-logbox pre { font-size: 11px; }
+      .hn-warning-badge { padding: 2px 5px; font-size: 10.5px; }
+      .hn-action { font-size: 11.5px; padding: 7px 4px; min-height: 34px; }
+      .hn-tools { padding: 12px 10px; }
+      .hn-tool-grid { gap: 6px; }
+      .hn-tool { font-size: 11px; padding: 7px 6px; gap: 6px; }
     }
 
     @container (max-width: 800px), screen and (max-width: 800px) {
       .hn-modules { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-      .hn-module-head { min-height: 0; }
-      .hn-title-row { flex-direction: row; align-items: center; }
-      .hn-module { min-height: 490px; padding: 20px; }
-      .hn-module h2 { font-size: 16px; }
-      .hn-row { min-height: 54px; }
-      .hn-row dt, .hn-row dd { font-size: 13px; }
+      .hn-module { min-height: 400px; padding: 16px 14px; }
+      .hn-module h2 { font-size: 14.5px; }
+      .hn-row { min-height: 40px; }
+      .hn-row dt { font-size: 12px; }
+      .hn-row dd { font-size: 12.5px; }
       .hn-tool-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-      .hn-shell { min-height: 0; }
-      .hn-footer { margin-top: 28px; }
+      .hn-footer { margin-top: 20px; }
     }
 
     @container (max-width: 540px), screen and (max-width: 540px) {
-      .hn-topbar { padding: 18px 16px; gap: 14px; }
+      .hn-topbar { padding: 12px 14px; gap: 10px; }
       .hn-brand { flex-basis: 100%; }
-      .hn-brand h1 { font-size: 17px; }
-      .hn-brand p { font-size: 11px; white-space: normal; }
+      .hn-brand h1 { font-size: 15px; }
+      .hn-brand p { font-size: 10.5px; white-space: normal; }
       .hn-top-controls { flex-basis: 100%; justify-content: space-between; }
-      .hn-top-metrics { gap: 8px; }
+      .hn-top-metrics { gap: 6px; }
       .hn-top-metric { flex-wrap: wrap; width: 100%; justify-content: space-between; }
-      .hn-main { padding: 18px 14px; }
-      .hn-modules { grid-template-columns: minmax(0, 1fr); gap: 16px; }
-      .hn-module { padding: 20px 18px; }
+      .hn-main { padding: 14px 10px; }
+      .hn-modules { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+      .hn-module { padding: 16px 14px; }
       .hn-tool-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     }
 
     @media (pointer: coarse) {
-      .hn-theme button { min-height: 44px; }
-      .hn-action { min-height: 48px; }
-      .hn-tool { min-height: 48px; }
+      .hn-theme button { min-height: 40px; }
+      .hn-action { min-height: 42px; }
+      .hn-tool { min-height: 42px; }
     }
   </style>
 </head>
@@ -1011,13 +1013,13 @@
         <!-- 1. RouterOS Card -->
         <article class="hn-module" aria-labelledby="oracle-router-title" id="card-ros">
           <header class="hn-module-head">
-            <div class="hn-title-row">
-              <h2 id="oracle-router-title">RouterOS 主路由</h2>
+            <div class="hn-status-row">
               <span id="ros-badge" class="hn-status">
                 <span class="hn-dot" aria-hidden="true"></span>
                 <span id="ros-status-text">Winbox 在线 (0.2 ms)</span>
               </span>
             </div>
+            <h2 id="oracle-router-title">RouterOS 主路由</h2>
             <p class="hn-subtitle">MikroTik CHR · 10.10.11.1</p>
           </header>
 
@@ -1079,13 +1081,13 @@
         <!-- 2. MosDNS Card -->
         <article class="hn-module" aria-labelledby="oracle-mos-title" id="card-mosdns">
           <header class="hn-module-head">
-            <div class="hn-title-row">
-              <h2 id="oracle-mos-title">MosDNS 解析中心</h2>
+            <div class="hn-status-row">
               <span id="mos-badge" class="hn-status">
                 <span class="hn-dot" aria-hidden="true"></span>
                 <span id="mos-status-text">服务正常</span>
               </span>
             </div>
+            <h2 id="oracle-mos-title">MosDNS 解析中心</h2>
             <p class="hn-subtitle">智能分流与防污染 · 端口 :53</p>
           </header>
 
@@ -1112,7 +1114,7 @@
 
           <div class="hn-logbox" id="mos-alert-box" style="display:none;">
             <p class="hn-log-title">
-              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/>
                 <line x1="12" x2="12" y1="9" y2="13"/>
                 <line x1="12" x2="12.01" y1="17" y2="17"/>
@@ -1129,13 +1131,13 @@
         <!-- 3. Sing-box Card -->
         <article class="hn-module" aria-labelledby="oracle-sing-title" id="card-singbox">
           <header class="hn-module-head">
-            <div class="hn-title-row">
-              <h2 id="oracle-sing-title">Sing-box 出海内核</h2>
+            <div class="hn-status-row">
               <span id="sb-badge" class="hn-status">
                 <span class="hn-dot" aria-hidden="true"></span>
                 <span id="sb-status-text">核心在线</span>
               </span>
             </div>
+            <h2 id="oracle-sing-title">Sing-box 出海内核</h2>
             <p class="hn-subtitle">Clash-API 协议栈 · 端口 :9090</p>
           </header>
 
@@ -1169,13 +1171,13 @@
         <!-- 4. daed Card -->
         <article class="hn-module" aria-labelledby="oracle-daed-title" id="card-daed">
           <header class="hn-module-head">
-            <div class="hn-title-row">
-              <h2 id="oracle-daed-title">daed eBPF 透明代理</h2>
+            <div class="hn-status-row">
               <span id="daed-badge" class="hn-status">
                 <span class="hn-dot" aria-hidden="true"></span>
                 <span id="daed-status-text">正常运行 (2.3 ms)</span>
               </span>
             </div>
+            <h2 id="oracle-daed-title">daed eBPF 透明代理</h2>
             <p class="hn-subtitle">内核级透明重定向 · 端口 :2023</p>
           </header>
 
@@ -1213,13 +1215,13 @@
         <!-- 5. Debian Card -->
         <article class="hn-module" aria-labelledby="oracle-debian-title" id="card-debian">
           <header class="hn-module-head">
-            <div class="hn-title-row">
-              <h2 id="oracle-debian-title">Debian 旁路由底座</h2>
+            <div class="hn-status-row">
               <span id="ha-badge" class="hn-status">
                 <span class="hn-dot" aria-hidden="true"></span>
                 <span id="ha-status-text">MASTER 主机</span>
               </span>
             </div>
+            <h2 id="oracle-debian-title">Debian 旁路由底座</h2>
             <p class="hn-subtitle" id="host-sub-text">系统宿主与高可用集群 (10.10.11.7)</p>
           </header>
 
@@ -1275,7 +1277,7 @@
         <div class="hn-tool-grid">
           <!-- 1. Speedtest -->
           <a class="hn-tool cursor-interaction" href="https://www.speedtest.net/" target="_blank">
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <circle cx="12" cy="12" r="10"/>
               <path d="m14.31 8 5.74 9.94"/>
               <path d="M9.69 8h11.48"/>
@@ -1289,7 +1291,7 @@
 
           <!-- 2. DNS Leak -->
           <a class="hn-tool cursor-interaction" href="https://ipleak.net/" target="_blank">
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/>
               <path d="m9 12 2 2 4-4"/>
             </svg>
@@ -1298,7 +1300,7 @@
 
           <!-- 3. IP Info -->
           <a class="hn-tool cursor-interaction" href="https://ipinfo.io/" target="_blank">
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <circle cx="12" cy="12" r="10"/>
               <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/>
               <path d="M2 12h20"/>
@@ -1308,7 +1310,7 @@
 
           <!-- 4. Netflix Fast -->
           <a class="hn-tool cursor-interaction" href="https://fast.com/" target="_blank">
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"/>
             </svg>
             <span>Netflix Fast 测速</span>
@@ -1316,7 +1318,7 @@
 
           <!-- 5. Ping.pe -->
           <a class="hn-tool cursor-interaction" href="https://ping.pe/" target="_blank">
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <path d="M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2"/>
             </svg>
             <span>全球 Ping.pe 路由</span>
@@ -1324,7 +1326,7 @@
 
           <!-- 6. PVE 9 -->
           <a class="hn-tool cursor-interaction" href="https://10.10.11.2:8006" target="_blank">
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <rect width="20" height="8" x="2" y="2" rx="2" ry="2"/>
               <rect width="20" height="8" x="2" y="14" rx="2" ry="2"/>
               <line x1="6" x2="6.01" y1="6" y2="6"/>
