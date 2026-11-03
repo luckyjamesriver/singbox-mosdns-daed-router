@@ -410,11 +410,11 @@
     /* 模块卡片 */
     .hn-module {
       min-width: 0;
-      min-height: 440px;
+      min-height: 480px;
       background: var(--hn-canvas);
       border: 1px solid var(--hn-hairline);
       border-radius: 10px;
-      padding: 18px 16px 16px;
+      padding: 20px 18px 18px;
       display: flex;
       flex-direction: column;
       transition: border-color 0.18s ease;
@@ -497,7 +497,7 @@
       background: var(--hn-muted) !important;
     }
 
-    /* 数据行：紧凑舒适，行高适中 */
+    /* 数据行：行高与留白适中，呼吸感充裕 */
     .hn-rows {
       width: 100%;
     }
@@ -506,9 +506,9 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      gap: 8px;
-      min-height: 38px;
-      padding: 8px 0;
+      gap: 10px;
+      min-height: 44px;
+      padding: 11px 0;
       border-bottom: 1px solid var(--hn-divider);
     }
 
@@ -519,7 +519,7 @@
     .hn-row dt {
       color: var(--hn-label);
       font-size: 12px;
-      line-height: 1.4;
+      line-height: 1.5;
       font-weight: 400;
       min-width: 0;
       flex-shrink: 0;
@@ -528,7 +528,7 @@
     .hn-row dd {
       color: var(--hn-ink);
       font-size: 12.5px;
-      line-height: 1.4;
+      line-height: 1.5;
       font-weight: 550;
       text-align: right;
       min-width: 0;
@@ -567,8 +567,8 @@
 
     /* MosDNS 日志块 */
     .hn-logbox {
-      margin-top: 10px;
-      padding: 9px 10px;
+      margin-top: 12px;
+      padding: 10px 12px;
       border: 1px solid var(--hn-gold-soft);
       border-radius: 6px;
       background: var(--hn-warning-bg);
@@ -602,14 +602,14 @@
 
     /* 资源横条 (Debian) */
     .hn-resource-row {
-      padding-bottom: 8px;
+      padding-bottom: 10px;
       border-bottom: 1px solid var(--hn-divider);
     }
 
     .hn-resource-row .hn-row {
       border: 0;
-      padding-bottom: 6px;
-      min-height: 32px;
+      padding: 6px 0 8px;
+      min-height: 36px;
     }
 
     .hn-resource-row:last-child {
@@ -881,9 +881,10 @@
       .hn-topbar { gap: 14px; padding-left: 18px; padding-right: 18px; }
       .hn-main { padding-left: 18px; padding-right: 18px; }
       .hn-modules { gap: 12px; }
-      .hn-module { padding: 16px 14px 14px; }
+      .hn-module { padding: 18px 16px 16px; }
       .hn-module h2 { font-size: 14px; }
       .hn-status { font-size: 10.5px; }
+      .hn-row { min-height: 42px; padding: 10px 0; }
       .hn-row dt { font-size: 11.5px; }
       .hn-row dd { font-size: 12px; }
     }
@@ -892,7 +893,7 @@
       .hn-topbar { flex-wrap: wrap; }
       .hn-brand { flex: 1; }
       .hn-top-metrics { order: 3; flex-basis: 100%; justify-content: flex-start; flex-wrap: wrap; }
-      .hn-row { flex-wrap: wrap; row-gap: 2px; min-height: 48px; padding: 7px 0; }
+      .hn-row { flex-wrap: wrap; row-gap: 3px; min-height: 46px; padding: 10px 0; }
       .hn-row dd { margin-left: auto; }
       .hn-flow { white-space: normal; }
       .hn-action { font-size: 12px; min-height: 36px; }
