@@ -58,11 +58,11 @@ DEFAULT_CONFIG = {
     "vps": {
         "primary": {
             "name": "主力出海",
-            "ip": "65.49.216.198"
+            "ip": "198.51.100.1"
         },
         "backup": {
             "name": "备用出海",
-            "ip": "107.172.75.159"
+            "ip": "198.51.100.2"
         }
     }
 }
@@ -102,7 +102,7 @@ STATE = {
     "dev_last_tx": 0,
     "dev_rx_bps": 0,
     "dev_tx_bps": 0,
-    "wan_ip_cache": {"ip": "114.217.234.211", "location": "江苏 苏州 电信", "last_check": 0},
+    "wan_ip_cache": {"ip": "--", "location": "待探测", "last_check": 0},
     "vps_cache": {
         "primary": {"online": True, "latency": 178.5, "text": "178.5 ms", "last_check": 0},
         "backup": {"online": True, "latency": 215.0, "text": "215.0 ms", "last_check": 0}
@@ -164,7 +164,7 @@ def get_wan_ip_info():
         req = urllib.request.Request("http://myip.ipip.net", headers={"User-Agent": "curl/7.88.1"})
         with urllib.request.urlopen(req, timeout=1.5) as resp:
             text = resp.read().decode("utf-8", errors="ignore").strip()
-            # Format: 当前 IP：114.217.234.211  来自于：中国 江苏 苏州  电信
+            # Format: 当前 IP：xxx.xxx.xxx.xxx  来自于：中国 xxx 电信
             m = re.search(r"当前 IP[：:]\s*([\d\.]+)\s+来自于[：:]\s*(.+)", text)
             if m:
                 cache["ip"] = m.group(1)
@@ -191,9 +191,9 @@ def get_wan_ip_info():
 # --- Dual-VPS Latency & Status Collector ---
 def get_vps_metrics():
     vps_cfg = CONFIG.get("vps", {})
-    p_ip = vps_cfg.get("primary", {}).get("ip", "65.49.216.198")
+    p_ip = vps_cfg.get("primary", {}).get("ip", "198.51.100.1")
     p_name = vps_cfg.get("primary", {}).get("name", "主力出海")
-    b_ip = vps_cfg.get("backup", {}).get("ip", "107.172.75.159")
+    b_ip = vps_cfg.get("backup", {}).get("ip", "198.51.100.2")
     b_name = vps_cfg.get("backup", {}).get("name", "备用出海")
 
     now = time.time()
