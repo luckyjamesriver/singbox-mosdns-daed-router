@@ -13,6 +13,7 @@
 - **Debian 12 + daed + sing-box 旁路由**：Linux 内核级 eBPF 链路层透明分流；搭载双线热备与抗封锁 UDP 矩阵（Hysteria 2 端口跳跃、TUIC v5、NaïveProxy）。
 - **MosDNS v5 智能解析**：本地监听 `:53`，精准分流国内白名单与海外常用域名，内置大容量内存缓存，首屏秒开。
 - **Keepalived 双机高可用**：Master (`10.10.11.7`) 与 Backup (`10.10.11.8`) 共享 VIP `10.10.11.10`，非抢占模式实现秒级无感容灾。
+- **Tailscale DERP + 全能出口中枢**：独立轻量虚拟机 (`10.10.11.3`) 承载私有 DERP 中继、子网穿透与 Exit Node 出口，外出设备无感直连家庭内网并继承软路由分流出海。
 
 ---
 
@@ -41,6 +42,7 @@ bash <(curl -fsSL https://raw.githubusercontent.com/luckyjamesriver/singbox-mosd
 | 步骤 05 | [05. 安装 daed](./05.安装%20daed.md) | daed eBPF 透明代理规则与分流绑定 |
 | 步骤 06 | [06. 安装 keepalived](./06.安装%20keepalived.md) | 备机克隆与 VRRP 双机热备 (VIP: 10.10.11.10) |
 | 步骤 07 | [07. 安装 HomeNet 监控仪表盘](./07.安装%20HomeNet%20监控仪表盘.md) | 原生 Python 零依赖轻量全网监控门户 |
+| 步骤 08 | [08. 安装 Tailscale DERP 节点](./08.安装与配置%20Tailscale%20DERP%20节点.md) | 私有中继、内网穿透子网路由与出海出口三合一 |
 
 ---
 
