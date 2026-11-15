@@ -175,6 +175,53 @@ install_mosdns() {
     touch /etc/mosdns/rules/ai-proxy.txt
     touch /etc/mosdns/rules/adblock.txt
 
+    # 写入 WebRTC STUN 阻断列表 (彻底杜绝浏览器通过 WebRTC 探测并泄露国内真实公网 IP)
+    cat > /etc/mosdns/rules/block-stun.txt << 'EOF'
+# === 国内大厂 STUN 探测服务 (防 IPPure/指纹站借国内直连泄露真实 IP) ===
+stun.chat.bilibili.com
+stun.hitv.com
+stun.miwifi.com
+stun.douyucdn.cn
+stun.douyu.com
+stun.huya.com
+stun.qq.com
+stun.baidu.com
+stun.youku.com
+stun.iqiyi.com
+stun.kuaishou.com
+
+# === 国际知名公共 STUN 服务器 ===
+stun.l.google.com
+stun1.l.google.com
+stun2.l.google.com
+stun3.l.google.com
+stun4.l.google.com
+stun.google.com
+stun.cloudflare.com
+stun.stunprotocol.org
+stun.sipgate.net
+stun.ekiga.net
+stun.ideasip.com
+stun.iptel.org
+stun.rixtelecom.se
+stun.schlund.de
+stun.voxgratia.org
+stun.voiparound.com
+stun.voipbuster.com
+stun.voipstunt.com
+stun.counterpath.com
+stun.1und1.de
+stun.gmx.net
+stun.callwithus.com
+stun.counterpath.net
+stun.internetcalls.com
+stun.freeswitch.org
+stun.twilio.com
+global.stun.twilio.com
+stun.nextcloud.com
+stun.syncthing.net
+EOF
+
     # 写入强制国内直连域名 (含阿里/淘宝全系、金融与本地资产)
     cat > /etc/mosdns/rules/force-cn.txt << 'EOF'
 taobao.com
@@ -246,6 +293,7 @@ plugins:
       files:
         - "/etc/mosdns/rules/reject-list.txt"
         - "/etc/mosdns/rules/adblock.txt"
+        - "/etc/mosdns/rules/block-stun.txt"
 
   - tag: cn_ip
     type: ip_set
