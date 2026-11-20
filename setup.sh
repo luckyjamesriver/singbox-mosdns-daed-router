@@ -240,8 +240,8 @@ alibabadns.com
 queniuak.com
 mmstat.com
 split.io
-jamesho.online
-hofamilynet.online
+yourdomain.online
+myfamilynet.online
 EOF
 
     # 写入标准 MosDNS 配置文件
