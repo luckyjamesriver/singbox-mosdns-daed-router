@@ -870,6 +870,21 @@ EOF
     systemctl daemon-reload
     systemctl enable sing-box --now
     systemctl restart sing-box
+
+    # 部署协议熔断与自我保护机制 (Circuit Breaker)
+    info "部署 Sing-box 协议熔断与自我保护看门狗 (/usr/local/bin/breaker-ctl)..."
+    if [[ -f "./scripts/sing-box-circuit-breaker.py" ]]; then
+        cp -f "./scripts/sing-box-circuit-breaker.py" /usr/local/bin/sing-box-circuit-breaker.py
+        chmod +x /usr/local/bin/sing-box-circuit-breaker.py
+        ln -sf /usr/local/bin/sing-box-circuit-breaker.py /usr/local/bin/breaker-ctl
+    fi
+    if [[ -f "./scripts/sing-box-breaker.service" && -f "./scripts/sing-box-breaker.timer" ]]; then
+        cp -f "./scripts/sing-box-breaker.service" /etc/systemd/system/
+        cp -f "./scripts/sing-box-breaker.timer" /etc/systemd/system/
+        systemctl daemon-reload
+        systemctl enable --now sing-box-breaker.timer 2>/dev/null || true
+    fi
+
     success "Sing-box 1.14+ 与 MetaCubeXD 面板已就绪 (监听 :7891 / :9090)！"
 }
 
@@ -944,6 +959,7 @@ show_summary() {
     echo -e "  - ⚡ ${GREEN}Sing-box 代理入站端口${PLAIN} : ${YELLOW}${LOCAL_IP}:7891${PLAIN} (Socks5)"
     echo ""
     echo -e "${CYAN}【已配置的平滑升级与运维工具】:${PLAIN}"
+    echo -e "  - 🛡️  协议熔断保护状态: ${YELLOW}sudo breaker-ctl status${PLAIN} (自动保护防封 VPS)"
     echo -e "  - ⚡ 升级 Sing-box 核心 : ${YELLOW}sudo /usr/local/bin/update-sing-box${PLAIN} (或 update_singbox.sh)"
     echo -e "  - 🌐 升级 MosDNS 核心   : ${YELLOW}sudo /usr/local/bin/update-mosdns${PLAIN} (或 update_mosdns.sh)"
     echo -e "  - 📊 升级 Web 仪表板    : ${YELLOW}sudo /usr/local/bin/update_metacubexd.sh${PLAIN}"

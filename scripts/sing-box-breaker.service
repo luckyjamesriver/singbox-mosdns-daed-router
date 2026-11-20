@@ -1,0 +1,10 @@
+[Unit]
+Description=Sing-box Protocol Circuit Breaker
+After=sing-box.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/sing-box-circuit-breaker.py check
+
+[Install]
+WantedBy=multi-user.target
