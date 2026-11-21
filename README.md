@@ -43,6 +43,7 @@ bash <(curl -fsSL https://raw.githubusercontent.com/luckyjamesriver/singbox-mosd
 | 步骤 06 | [06. 安装 keepalived](./06.安装%20keepalived.md) | 备机克隆与 VRRP 双机热备 (VIP: 10.10.11.10) |
 | 步骤 07 | [07. 安装 HomeNet 监控仪表盘](./07.安装%20HomeNet%20监控仪表盘.md) | 原生 Python 零依赖轻量全网监控门户 |
 | 步骤 08 | [08. 安装 Tailscale DERP 节点](./08.安装与配置%20Tailscale%20DERP%20节点.md) | 私有中继、内网穿透子网路由与出海出口三合一 |
+| 步骤 09 | [09. PVE 虚拟机备份与灾难恢复](./09.PVE%20虚拟机备份与灾难恢复.md) | 7x24小时全自动热备推送到 NAS、替换轮转与全新小主机异机重建 |
 
 ---
 
